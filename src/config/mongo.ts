@@ -13,7 +13,7 @@ export async function connectMongo(): Promise<void> {
       autoIndex: true,
       maxPoolSize: 10,
     });
-    logger.info('Conexión a MongoDB exitosa');
+    logger.info('Conexión a MongoDB exitosa...');
   } catch (error) {
     logger.error({ err: error }, 'Error al conectar a MongoDB');
     process.exit(1);
