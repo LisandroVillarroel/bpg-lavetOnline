@@ -1,12 +1,18 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUsuarioEmpresa {
-  idEmpresa: string;
+  empresa_Id: string;
   rutEmpresa: string;
   razonSocial: string;
   nombreFantasia: string;
   menu_Id: string;
   tipoEmpresa?: 'Laboratorio' | 'Veterinaria' | 'Usuario';
+}
+
+export interface IVeterinaria {
+  tipoVeterinario: string;
+  rolVeterinario: string;
+  porcentajeComisionVeterinario: number;
 }
 
 export interface MenuItem {
@@ -30,23 +36,35 @@ export interface IUsuario extends Document {
   telefono?: string;
   email?: string;
   direccion?: string;
-  usuarioEmpresa?: IUsuarioEmpresa;
-  tipoUsuario?: 'Laboratorio' | 'Veterinaria' | 'Usuario';
+  region?: String;
+  comuna?: string;
   MenuItem?: MenuItem[];
+  tipoUsuario?: 'Laboratorio' | 'Veterinaria' | 'Usuario';
+  veterinaria?: IVeterinaria;
+  usuarioEmpresa?: IUsuarioEmpresa;
+  estadoUsuario?: 'Activo' | 'Bloqueado' | 'Suspendido';
   usuarioCrea_id?: string;
   usuarioModifica_id?: string;
-  estadoUsuario?: 'Activo' | 'Inactivo';
   estado?: string;
 }
 
 const UsuarioEmpresaSchema = new Schema<IUsuarioEmpresa>(
   {
-    idEmpresa: { type: String, required: true },
+    empresa_Id: { type: String, required: true },
     rutEmpresa: { type: String, required: true },
     razonSocial: { type: String, required: true },
     nombreFantasia: { type: String, required: true },
     menu_Id: { type: String, required: true },
     tipoEmpresa: { type: String },
+  },
+  { _id: false },
+);
+
+const VeterinariaSchema = new Schema<IVeterinaria>(
+  {
+    tipoVeterinario: { type: String, required: true },
+    rolVeterinario: { type: String, required: true },
+    porcentajeComisionVeterinario: { type: Number, required: true },
   },
   { _id: false },
 );
@@ -64,23 +82,33 @@ const MenuItemSchema = new Schema<MenuItem>(
   { _id: false },
 );
 
-const UsuarioSchema = new Schema<IUsuario>({
-  usuario: { type: String, required: true, unique: true },
-  contrasena: { type: String, required: true },
-  rutUsuario: { type: String, required: true },
-  nombres: { type: String, required: true },
-  apellidoPaterno: { type: String, required: true },
-  apellidoMaterno: { type: String, required: true },
-  telefono: { type: String },
-  email: { type: String },
-  direccion: { type: String },
-  usuarioEmpresa: { type: UsuarioEmpresaSchema },
-  tipoUsuario: { type: String, enum: ['Laboratorio', 'Veterinaria', 'Usuario'] },
-  MenuItem: [MenuItemSchema],
-  usuarioCrea_id: { type: String },
-  usuarioModifica_id: { type: String },
-  estadoUsuario: { type: String, enum: ['Activo', 'Inactivo'] },
-  estado: { type: String },
-});
+const UsuarioSchema = new Schema<IUsuario>(
+  {
+    usuario: { type: String, required: true, unique: true },
+    contrasena: { type: String, required: true },
+    rutUsuario: { type: String, required: true },
+    nombres: { type: String, required: true },
+    apellidoPaterno: { type: String, required: true },
+    apellidoMaterno: { type: String, required: true },
+    telefono: { type: String },
+    email: { type: String },
+    direccion: { type: String },
+    region: { type: String },
+    comuna: { type: String },
+    MenuItem: [MenuItemSchema],
+    tipoUsuario: { type: String, enum: ['Laboratorio', 'Veterinaria', 'Propietario'] },
+    veterinaria: { type: VeterinariaSchema },
+    usuarioEmpresa: { type: UsuarioEmpresaSchema },
+    estadoUsuario: { type: String },
+    usuarioCrea_id: { type: String },
+    usuarioModifica_id: { type: String },
+
+    estado: { type: String },
+  },
+  {
+    timestamps: { createdAt: 'fechaHora_crea', updatedAt: 'fechaHora_modifica' },
+    // Guardar Fecha creacion y actualizacion
+  },
+);
 
 export const UserModel = mongoose.model<IUsuario>('usuarios', UsuarioSchema);
