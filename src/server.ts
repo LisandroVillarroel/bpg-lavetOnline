@@ -2,13 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import { connectMongo } from './config/mongo';
 import { logger } from './config/logger';
+
 import authRoutes from './modules/auth/auth.routes';
+import menuRoutes from './modules/menu/menu.routes';
+import usuarioRoutes from './modules/usuario/usuario.routes';
 
 const app = express();
 
 app.use(
   cors({
-    origin: 'http://localhost:4200',
+    origin: ['http://localhost:4200', 'http://localhost:4400'],
     credentials: true,
   }),
 );
@@ -30,6 +33,12 @@ app.get('/health', (req, res) => {
 
 // Rutas de autenticación
 app.use('/api/auth', authRoutes);
+
+// Rutas de menú
+app.use('/api/menu', menuRoutes);
+
+// Rutas de usuario
+app.use('/api/usuario', usuarioRoutes);
 
 const startServer = async () => {
   await connectMongo();

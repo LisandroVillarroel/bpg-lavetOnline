@@ -1,5 +1,19 @@
-import { Request, Response } from 'express';
 import { UserModel } from '../user/user.model';
+// Devuelve el usuario autenticado a partir del token
+export async function me(req: Request, res: Response) {
+  // @ts-ignore
+  const userData = req.user;
+  if (!userData || !userData.id) {
+    return res.status(401).json({ error: true, mensaje: 'No autorizado', codigo: 401 });
+  }
+  // Busca el usuario en la base de datos usando el campo correcto
+  const usuario = await UserModel.findById(userData.id).select('-contrasena');
+  if (!usuario) {
+    return res.status(404).json({ error: true, mensaje: 'Usuario no encontrado', codigo: 404 });
+  }
+  res.json(usuario);
+}
+import { Request, Response } from 'express';
 import { compare } from 'bcryptjs';
 import jwt, { Secret } from 'jsonwebtoken';
 import { env } from '../../config/env';
