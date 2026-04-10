@@ -63,7 +63,7 @@ const UsuarioEmpresaSchema = new Schema<IUsuarioEmpresa>(
 const VeterinariaSchema = new Schema<IVeterinaria>(
   {
     tipoVeterinario: { type: String, required: true },
-    rolVeterinario: { type: String, required: true },
+    rolVeterinario: { type: String, required: true }, //Administrador-Veterinario, Veterinario, AsistenteVeterinario
     porcentajeComisionVeterinario: { type: Number, required: true },
   },
   { _id: false },

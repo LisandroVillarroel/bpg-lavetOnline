@@ -51,6 +51,7 @@ export async function login(req: Request, res: Response) {
   const usuario = await UserModel.findOne({
     $or: [{ usuario: usuario_ }, { rutUsuario: usuario_ }],
   });
+  console.log('suaruio encontrado:', usuario);
   if (!usuario) {
     return res.status(200).json(
       buildResponse({

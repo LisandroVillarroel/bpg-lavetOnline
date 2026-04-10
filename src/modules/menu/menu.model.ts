@@ -20,6 +20,7 @@ export interface IMenu extends Document {
   fechaHora_modifica?: Date;
 }
 
+// Definición recursiva para children
 const MenuItemSchema = new Schema<IMenuItem>(
   {
     despliegaNombre: { type: String, required: true },
@@ -28,10 +29,13 @@ const MenuItemSchema = new Schema<IMenuItem>(
     tipoPermiso: { type: String },
     indeterminate: { type: Boolean, default: false },
     seleccionado: { type: Boolean, default: false },
-    children: [{ type: Schema.Types.Mixed }],
+    children: [{ type: Schema.Types.Mixed }], // placeholder, se redefine abajo
   },
   { _id: true },
 );
+
+// Asignar children recursivamente
+MenuItemSchema.add({ children: [MenuItemSchema] });
 
 const MenuSchema = new Schema<IMenu>(
   {
