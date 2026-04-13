@@ -5,7 +5,6 @@ export interface IUsuarioEmpresa {
   rutEmpresa: string;
   razonSocial: string;
   nombreFantasia: string;
-  menu_Id: string;
   tipoEmpresa?: 'Laboratorio' | 'Veterinaria' | 'Usuario';
 }
 
@@ -41,7 +40,7 @@ export interface IUsuario extends Document {
   MenuItem?: MenuItem[];
   tipoUsuario?: 'Laboratorio' | 'Veterinaria' | 'Usuario';
   veterinaria?: IVeterinaria;
-  usuarioEmpresa?: IUsuarioEmpresa;
+  empresa?: IUsuarioEmpresa;
   estadoUsuario?: 'Activo' | 'Bloqueado' | 'Suspendido';
   usuarioCrea_id?: string;
   usuarioModifica_id?: string;
@@ -54,7 +53,6 @@ const UsuarioEmpresaSchema = new Schema<IUsuarioEmpresa>(
     rutEmpresa: { type: String, required: true },
     razonSocial: { type: String, required: true },
     nombreFantasia: { type: String, required: true },
-    menu_Id: { type: String, required: true },
     tipoEmpresa: { type: String },
   },
   { _id: false },
@@ -98,7 +96,7 @@ const UsuarioSchema = new Schema<IUsuario>(
     MenuItem: [MenuItemSchema],
     tipoUsuario: { type: String, enum: ['Laboratorio', 'Veterinaria', 'Propietario'] },
     veterinaria: { type: VeterinariaSchema },
-    usuarioEmpresa: { type: UsuarioEmpresaSchema },
+    empresa: { type: UsuarioEmpresaSchema },
     estadoUsuario: { type: String },
     usuarioCrea_id: { type: String },
     usuarioModifica_id: { type: String },
