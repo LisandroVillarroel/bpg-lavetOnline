@@ -11,11 +11,11 @@ import {
 const router = Router();
 
 // CRUD principal
-router.post('/agregar', agregarEmpresa);
+router.post('/', agregarEmpresa);
 router.put('/modificar/:id', modificarEmpresa);
 router.put('/eliminar/:id', eliminarEmpresa); // Eliminación lógica (PUT)
 router.get('/consulta/:id', obtenerEmpresaPorId);
-router.get('/consulta', obtenerEmpresas);
+router.get('/consultaTotal', obtenerEmpresas);
 
 // Modificar solo el menú
 router.put('/modificar-menu/:id', modificarMenuEmpresa);

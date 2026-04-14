@@ -6,6 +6,7 @@ import { logger } from './config/logger';
 import authRoutes from './modules/auth/auth.routes';
 import menuRoutes from './modules/menu/menu.routes';
 import usuarioRoutes from './modules/usuario/usuario.routes';
+import empresaRoutes from './modules/empresa/empresa.routes';
 
 const app = express();
 
@@ -39,6 +40,9 @@ app.use('/api/menu', menuRoutes);
 
 // Rutas de usuario
 app.use('/api/usuario', usuarioRoutes);
+
+// Rutas de empresa
+app.use('/api/empresa', empresaRoutes);
 
 const startServer = async () => {
   await connectMongo();
