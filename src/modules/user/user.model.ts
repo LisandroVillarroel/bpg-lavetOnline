@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { MenuItem, MenuItemSchema } from '../../shared/modulo/menu-item.interface';
 
 export interface IUsuarioEmpresa {
   empresa_Id: string;
@@ -12,17 +13,6 @@ export interface IVeterinaria {
   tipoVeterinario: string;
   rolVeterinario: string;
   porcentajeComisionVeterinario: number;
-}
-
-export interface MenuItem {
-  _id?: string;
-  despliegaNombre: string;
-  iconoNombre: string;
-  route?: string;
-  tipoPermiso?: string;
-  indeterminate?: boolean;
-  seleccionado?: boolean;
-  children?: MenuItem[];
 }
 
 export interface IUsuario extends Document {
@@ -42,8 +32,10 @@ export interface IUsuario extends Document {
   veterinaria?: IVeterinaria;
   empresa?: IUsuarioEmpresa;
   estadoUsuario?: 'Activo' | 'Bloqueado' | 'Suspendido';
-  usuarioCrea_id?: string;
-  usuarioModifica_id?: string;
+  usuarioCrea?: string;
+  usuarioModifica?: string;
+  fechaHora_crea?: Date;
+  fechaHora_modifica?: Date;
   estado?: string;
 }
 
@@ -67,46 +59,34 @@ const VeterinariaSchema = new Schema<IVeterinaria>(
   { _id: false },
 );
 
-const MenuItemSchema = new Schema<MenuItem>(
-  {
-    despliegaNombre: { type: String, required: true },
-    iconoNombre: { type: String, required: true },
-    route: { type: String },
-    tipoPermiso: { type: String },
-    indeterminate: { type: Boolean },
-    seleccionado: { type: Boolean },
-    children: [{ type: Schema.Types.Mixed }],
-  },
-  { _id: false },
-);
+const UsuarioSchema = new Schema<IUsuario>({
+  usuario: { type: String, required: true, unique: true },
+  contrasena: { type: String, required: true },
+  rutUsuario: { type: String, required: true },
+  nombres: { type: String, required: true },
+  apellidoPaterno: { type: String, required: true },
+  apellidoMaterno: { type: String, required: true },
+  telefono: { type: String },
+  email: { type: String },
+  direccion: { type: String },
+  region: { type: String },
+  comuna: { type: String },
+  MenuItem: [MenuItemSchema],
+  tipoUsuario: { type: String, enum: ['Laboratorio', 'Veterinaria', 'Propietario'] },
+  veterinaria: { type: VeterinariaSchema },
+  empresa: { type: UsuarioEmpresaSchema },
+  estadoUsuario: { type: String },
+  usuarioCrea: { type: String },
+  usuarioModifica: { type: String },
+  fechaHora_crea: { type: Date, default: Date.now },
+  fechaHora_modifica: { type: Date, default: Date.now },
+  estado: { type: String },
+});
 
-const UsuarioSchema = new Schema<IUsuario>(
-  {
-    usuario: { type: String, required: true, unique: true },
-    contrasena: { type: String, required: true },
-    rutUsuario: { type: String, required: true },
-    nombres: { type: String, required: true },
-    apellidoPaterno: { type: String, required: true },
-    apellidoMaterno: { type: String, required: true },
-    telefono: { type: String },
-    email: { type: String },
-    direccion: { type: String },
-    region: { type: String },
-    comuna: { type: String },
-    MenuItem: [MenuItemSchema],
-    tipoUsuario: { type: String, enum: ['Laboratorio', 'Veterinaria', 'Propietario'] },
-    veterinaria: { type: VeterinariaSchema },
-    empresa: { type: UsuarioEmpresaSchema },
-    estadoUsuario: { type: String },
-    usuarioCrea_id: { type: String },
-    usuarioModifica_id: { type: String },
-
-    estado: { type: String },
-  },
-  {
-    timestamps: { createdAt: 'fechaHora_crea', updatedAt: 'fechaHora_modifica' },
-    // Guardar Fecha creacion y actualizacion
-  },
-);
+// Middleware para actualizar fechaHora_modifica automáticamente
+UsuarioSchema.pre('findOneAndUpdate', function (next) {
+  this.set({ fechaHora_modifica: new Date() });
+  next();
+});
 
 export const UserModel = mongoose.model<IUsuario>('usuarios', UsuarioSchema);
