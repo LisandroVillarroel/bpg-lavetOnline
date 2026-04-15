@@ -11,7 +11,7 @@ import {
 const router = Router();
 
 // Consultar todos los usuarios activos
-router.get('/', obtenerUsuarios);
+router.get('/:empresaId', obtenerUsuarios);
 // Consultar usuario por nombre de usuario
 router.get('/:usuario', obtenerUsuarioPorUsuario);
 // Agregar usuario

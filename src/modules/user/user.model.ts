@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { MenuItem, MenuItemSchema } from '../../shared/modulo/menu-item.interface';
 
 export interface IUsuarioEmpresa {
-  empresa_Id: string;
+  empresaId: string;
   rutEmpresa: string;
   razonSocial: string;
   nombreFantasia: string;
@@ -41,7 +41,7 @@ export interface IUsuario extends Document {
 
 const UsuarioEmpresaSchema = new Schema<IUsuarioEmpresa>(
   {
-    empresa_Id: { type: String, required: true },
+    empresaId: { type: String, required: true },
     rutEmpresa: { type: String, required: true },
     razonSocial: { type: String, required: true },
     nombreFantasia: { type: String, required: true },

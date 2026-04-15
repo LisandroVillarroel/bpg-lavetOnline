@@ -19,7 +19,12 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
 // Consultar todos los usuarios (solo activos)
 export async function obtenerUsuarios(req: Request, res: Response) {
   try {
-    const usuarios = await UserModel.find({ estadoUsuario: 'Activo' });
+    const { empresaId } = req.params;
+    const filtro: any = { estadoUsuario: 'Activo' };
+    if (empresaId) filtro['empresa.empresaId'] = empresaId;
+
+    console.log('Filtro para obtener usuarios:', filtro);
+    const usuarios = await UserModel.find(filtro);
     return res
       .status(200)
       .json(buildResponse({ data: usuarios, mensaje: 'Usuarios obtenidos correctamente' }));
@@ -147,23 +152,19 @@ export async function modificarMenuUsuario(req: Request, res: Response) {
         .status(200)
         .json(buildResponse({ error: true, codigo: 404, mensaje: 'Usuario no encontrado' }));
     }
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          data: usuarioActualizado,
-          mensaje: 'Menú del usuario actualizado correctamente',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        data: usuarioActualizado,
+        mensaje: 'Menú del usuario actualizado correctamente',
+      }),
+    );
   } catch (error) {
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          error: true,
-          codigo: 500,
-          mensaje: 'Error al actualizar el menú del usuario',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        codigo: 500,
+        mensaje: 'Error al actualizar el menú del usuario',
+      }),
+    );
   }
 }
