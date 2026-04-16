@@ -6,6 +6,7 @@ import {
   modificarUsuario,
   eliminarUsuario,
   modificarMenuUsuario,
+  modificarTemaColorSistema,
 } from './usuario.controller';
 
 const router = Router();
@@ -20,6 +21,8 @@ router.post('/', agregarUsuario);
 router.put('/:id', modificarUsuario);
 // Modificar solo el menú del usuario
 router.put('/:id/menu', modificarMenuUsuario);
+// Modificar solo el tema del sistema del usuario
+router.put('/:id/tema-color', modificarTemaColorSistema);
 // Eliminar usuario (lógico)
 router.delete('/:id', eliminarUsuario);
 

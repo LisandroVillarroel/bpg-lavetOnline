@@ -12,7 +12,21 @@ const app = express();
 
 app.use(
   cors({
-    origin: ['http://localhost:4200', 'http://localhost:4400'],
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      const allowedOrigins = [
+        /^http:\/\/localhost:\d+$/,
+        /^http:\/\/127\.0\.0\.1:\d+$/,
+        /^https:\/\/localhost:\d+$/,
+        /^https:\/\/127\.0\.0\.1:\d+$/,
+      ];
+
+      const isAllowed = allowedOrigins.some((pattern) => pattern.test(origin));
+      return callback(isAllowed ? null : new Error('Origen no permitido por CORS'), isAllowed);
+    },
     credentials: true,
   }),
 );

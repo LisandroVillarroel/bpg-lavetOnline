@@ -18,6 +18,7 @@ export interface IVeterinaria {
 export interface IUsuario extends Document {
   usuario?: string;
   contrasena?: string;
+  temaColorSistema?: string;
   rutUsuario: string;
   nombres: string;
   apellidoPaterno: string;
@@ -62,6 +63,7 @@ const VeterinariaSchema = new Schema<IVeterinaria>(
 const UsuarioSchema = new Schema<IUsuario>({
   usuario: { type: String, required: true, unique: true },
   contrasena: { type: String, required: true },
+  temaColorSistema: { type: String },
   rutUsuario: { type: String, required: true },
   nombres: { type: String, required: true },
   apellidoPaterno: { type: String, required: true },

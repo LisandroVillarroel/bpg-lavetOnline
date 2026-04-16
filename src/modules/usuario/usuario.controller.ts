@@ -16,6 +16,13 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
   ...overrides,
 });
 
+const TEMAS_VALIDOS = [
+  'rose-red-theme',
+  'azure-blue-theme',
+  'magenta-violet-theme',
+  'cyan-orange-theme',
+];
+
 // Consultar todos los usuarios (solo activos)
 export async function obtenerUsuarios(req: Request, res: Response) {
   try {
@@ -164,6 +171,66 @@ export async function modificarMenuUsuario(req: Request, res: Response) {
         error: true,
         codigo: 500,
         mensaje: 'Error al actualizar el menú del usuario',
+      }),
+    );
+  }
+}
+
+export async function modificarTemaColorSistema(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const { temaColorSistema } = req.body;
+
+    if (!id) {
+      return res
+        .status(200)
+        .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
+    }
+
+    if (!temaColorSistema || typeof temaColorSistema !== 'string') {
+      return res.status(200).json(
+        buildResponse({
+          error: true,
+          codigo: 400,
+          mensaje: 'temaColorSistema es requerido',
+        }),
+      );
+    }
+
+    if (!TEMAS_VALIDOS.includes(temaColorSistema)) {
+      return res.status(200).json(
+        buildResponse({
+          error: true,
+          codigo: 400,
+          mensaje: 'temaColorSistema no es valido',
+        }),
+      );
+    }
+
+    const usuarioActualizado = await UserModel.findByIdAndUpdate(
+      id,
+      { temaColorSistema },
+      { new: true },
+    );
+
+    if (!usuarioActualizado) {
+      return res
+        .status(200)
+        .json(buildResponse({ error: true, codigo: 404, mensaje: 'Usuario no encontrado' }));
+    }
+
+    return res.status(200).json(
+      buildResponse({
+        data: usuarioActualizado,
+        mensaje: 'Tema del sistema actualizado correctamente',
+      }),
+    );
+  } catch (error) {
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        codigo: 500,
+        mensaje: 'Error al actualizar el tema del sistema',
       }),
     );
   }
