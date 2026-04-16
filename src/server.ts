@@ -4,6 +4,7 @@ import { connectMongo } from './config/mongo';
 import { logger } from './config/logger';
 
 import authRoutes from './modules/auth/auth.routes';
+import { authenticateToken } from './modules/auth/auth.middleware';
 import menuRoutes from './modules/menu/menu.routes';
 import usuarioRoutes from './modules/usuario/usuario.routes';
 import empresaRoutes from './modules/empresa/empresa.routes';
@@ -50,13 +51,13 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 
 // Rutas de menú
-app.use('/api/menu', menuRoutes);
+app.use('/api/menu', authenticateToken, menuRoutes);
 
 // Rutas de usuario
-app.use('/api/usuario', usuarioRoutes);
+app.use('/api/usuario', authenticateToken, usuarioRoutes);
 
 // Rutas de empresa
-app.use('/api/empresa', empresaRoutes);
+app.use('/api/empresa', authenticateToken, empresaRoutes);
 
 const startServer = async () => {
   await connectMongo();
