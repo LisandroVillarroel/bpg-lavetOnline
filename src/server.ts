@@ -8,6 +8,8 @@ import { authenticateToken } from './modules/auth/auth.middleware';
 import menuRoutes from './modules/menu/menu.routes';
 import usuarioRoutes from './modules/usuario/usuario.routes';
 import empresaRoutes from './modules/empresa/empresa.routes';
+import tipoVeterinarioRoutes from './modules/tipo-veterinario/tipo-veterinario.routes';
+import rolVeterinarioRoutes from './modules/rol-veterinario/rol-veterinario.routes';
 
 const app = express();
 
@@ -58,6 +60,12 @@ app.use('/api/usuario', authenticateToken, usuarioRoutes);
 
 // Rutas de empresa
 app.use('/api/empresa', authenticateToken, empresaRoutes);
+
+// Rutas de tipo veterinario
+app.use('/api/tipo-veterinario', authenticateToken, tipoVeterinarioRoutes);
+
+// Rutas de rol veterinario
+app.use('/api/rol-veterinario', authenticateToken, rolVeterinarioRoutes);
 
 const startServer = async () => {
   await connectMongo();
