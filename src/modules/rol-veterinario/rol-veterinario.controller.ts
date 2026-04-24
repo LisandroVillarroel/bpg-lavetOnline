@@ -16,24 +16,28 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
   ...overrides,
 });
 
-export async function obtenerRolesVeterinario(_req: Request, res: Response) {
+export async function obtenerRolesVeterinario(req: Request, res: Response) {
   try {
-    const roles = await RolVeterinario.find({ estado: { $ne: 'Bloqueado' } });
+    const { idEmpresa } = req.query;
+    const filtro: Record<string, unknown> = { estado: 'Activo' };
+    if (typeof idEmpresa === 'string' && idEmpresa.trim().length > 0) {
+      filtro.idEmpresa = idEmpresa.trim();
+    }
+
+    const roles = await RolVeterinario.find(filtro);
     return res
       .status(200)
       .json(
         buildResponse({ data: roles, mensaje: 'Roles de veterinario obtenidos correctamente' }),
       );
   } catch (error) {
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          error: true,
-          codigo: 500,
-          mensaje: 'Error al obtener roles de veterinario',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        codigo: 500,
+        mensaje: 'Error al obtener roles de veterinario',
+      }),
+    );
   }
 }
 
@@ -47,7 +51,7 @@ export async function obtenerRolVeterinarioPorId(req: Request, res: Response) {
     }
 
     const rol = await RolVeterinario.findById(id);
-    if (!rol || rol.estado === 'Bloqueado') {
+    if (!rol || rol.estado !== 'Activo') {
       return res
         .status(200)
         .json(
@@ -80,15 +84,13 @@ export async function crearRolVeterinario(req: Request, res: Response) {
     });
     await nuevoRol.save();
 
-    return res
-      .status(201)
-      .json(
-        buildResponse({
-          data: nuevoRol,
-          codigo: 201,
-          mensaje: 'Rol de veterinario creado correctamente',
-        }),
-      );
+    return res.status(201).json(
+      buildResponse({
+        data: nuevoRol,
+        codigo: 201,
+        mensaje: 'Rol de veterinario creado correctamente',
+      }),
+    );
   } catch (error) {
     return res
       .status(200)
@@ -121,24 +123,20 @@ export async function modificarRolVeterinario(req: Request, res: Response) {
         );
     }
 
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          data: rolActualizado,
-          mensaje: 'Rol de veterinario actualizado correctamente',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        data: rolActualizado,
+        mensaje: 'Rol de veterinario actualizado correctamente',
+      }),
+    );
   } catch (error) {
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          error: true,
-          codigo: 500,
-          mensaje: 'Error al actualizar rol de veterinario',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        codigo: 500,
+        mensaje: 'Error al actualizar rol de veterinario',
+      }),
+    );
   }
 }
 
@@ -165,23 +163,19 @@ export async function eliminarRolVeterinario(req: Request, res: Response) {
         );
     }
 
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          data: rolEliminado,
-          mensaje: 'Rol de veterinario eliminado correctamente',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        data: rolEliminado,
+        mensaje: 'Rol de veterinario eliminado correctamente',
+      }),
+    );
   } catch (error) {
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          error: true,
-          codigo: 500,
-          mensaje: 'Error al eliminar rol de veterinario',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        codigo: 500,
+        mensaje: 'Error al eliminar rol de veterinario',
+      }),
+    );
   }
 }

@@ -62,7 +62,7 @@ app.use('/api/usuario', authenticateToken, usuarioRoutes);
 app.use('/api/empresa', authenticateToken, empresaRoutes);
 
 // Rutas de tipo veterinario
-app.use('/api/tipo-veterinario', authenticateToken, tipoVeterinarioRoutes);
+app.use('/api/tipo-veterinario', tipoVeterinarioRoutes);
 
 // Rutas de rol veterinario
 app.use('/api/rol-veterinario', authenticateToken, rolVeterinarioRoutes);

@@ -19,7 +19,7 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
 // Consultar todas las empresas (solo activas)
 export async function obtenerEmpresas(_req: Request, res: Response) {
   try {
-    const empresas = await Empresa.find({ estadoEmpresa: { $ne: 'Bloqueado' } });
+    const empresas = await Empresa.find({ estadoEmpresa: 'Activo' });
     return res
       .status(200)
       .json(buildResponse({ data: empresas, mensaje: 'Empresas obtenidas correctamente' }));
@@ -40,7 +40,7 @@ export async function obtenerEmpresaPorId(req: Request, res: Response) {
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
     const empresa = await Empresa.findById(id);
-    if (!empresa || empresa.estadoEmpresa === 'Bloqueado') {
+    if (!empresa || empresa.estadoEmpresa !== 'Activo') {
       return res
         .status(200)
         .json(buildResponse({ error: true, codigo: 404, mensaje: 'Empresa no encontrada' }));

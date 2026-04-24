@@ -16,24 +16,28 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
   ...overrides,
 });
 
-export async function obtenerTiposVeterinario(_req: Request, res: Response) {
+export async function obtenerTiposVeterinario(req: Request, res: Response) {
   try {
-    const tipos = await TipoVeterinarioModel.find({ estado: { $ne: 'Bloqueado' } });
+    const { idEmpresa } = req.query;
+    const filtro: Record<string, unknown> = { estado: 'Activo' };
+    if (typeof idEmpresa === 'string' && idEmpresa.trim().length > 0) {
+      filtro.idEmpresa = idEmpresa.trim();
+    }
+
+    const tipos = await TipoVeterinarioModel.find(filtro);
     return res
       .status(200)
       .json(
         buildResponse({ data: tipos, mensaje: 'Tipos de veterinario obtenidos correctamente' }),
       );
   } catch (error) {
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          error: true,
-          codigo: 500,
-          mensaje: 'Error al obtener tipos de veterinario',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        codigo: 500,
+        mensaje: 'Error al obtener tipos de veterinario',
+      }),
+    );
   }
 }
 
@@ -47,7 +51,7 @@ export async function obtenerTipoVeterinarioPorId(req: Request, res: Response) {
     }
 
     const tipo = await TipoVeterinarioModel.findById(id);
-    if (!tipo || tipo.estado === 'Bloqueado') {
+    if (!tipo || tipo.estado !== 'Activo') {
       return res
         .status(200)
         .json(
@@ -80,15 +84,13 @@ export async function crearTipoVeterinario(req: Request, res: Response) {
     });
 
     await nuevoTipo.save();
-    return res
-      .status(201)
-      .json(
-        buildResponse({
-          data: nuevoTipo,
-          codigo: 201,
-          mensaje: 'Tipo de veterinario creado correctamente',
-        }),
-      );
+    return res.status(201).json(
+      buildResponse({
+        data: nuevoTipo,
+        codigo: 201,
+        mensaje: 'Tipo de veterinario creado correctamente',
+      }),
+    );
   } catch (error) {
     return res
       .status(200)
@@ -124,24 +126,20 @@ export async function modificarTipoVeterinario(req: Request, res: Response) {
         );
     }
 
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          data: tipoActualizado,
-          mensaje: 'Tipo de veterinario actualizado correctamente',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        data: tipoActualizado,
+        mensaje: 'Tipo de veterinario actualizado correctamente',
+      }),
+    );
   } catch (error) {
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          error: true,
-          codigo: 500,
-          mensaje: 'Error al actualizar tipo de veterinario',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        codigo: 500,
+        mensaje: 'Error al actualizar tipo de veterinario',
+      }),
+    );
   }
 }
 
@@ -168,23 +166,19 @@ export async function eliminarTipoVeterinario(req: Request, res: Response) {
         );
     }
 
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          data: tipoEliminado,
-          mensaje: 'Tipo de veterinario eliminado correctamente',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        data: tipoEliminado,
+        mensaje: 'Tipo de veterinario eliminado correctamente',
+      }),
+    );
   } catch (error) {
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          error: true,
-          codigo: 500,
-          mensaje: 'Error al eliminar tipo de veterinario',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        codigo: 500,
+        mensaje: 'Error al eliminar tipo de veterinario',
+      }),
+    );
   }
 }
