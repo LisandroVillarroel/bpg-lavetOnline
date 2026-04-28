@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { Request, Response } from 'express';
 import { UserModel } from '../user/user.model';
 
@@ -6,6 +8,26 @@ type ApiResponse<T> = {
   data: T | null;
   codigo: number;
   mensaje: string;
+};
+
+const uploadsDir = path.join(__dirname, '..', '..', '..', 'uploads', 'usuarios');
+fs.mkdirSync(uploadsDir, { recursive: true });
+
+const saveBase64Image = async (base64String: string): Promise<string> => {
+  const matches = base64String.match(/^data:(image\/[^;]+);base64,(.*)$/);
+  const mimeType = matches?.[1] ?? 'image/png';
+  const data = matches?.[2] ?? base64String;
+  const extension = mimeType.split('/')[1] ?? 'png';
+  const filename = `usuario-${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+  const filePath = path.join(uploadsDir, filename);
+  const buffer = Buffer.from(data, 'base64');
+  await fs.promises.writeFile(filePath, buffer);
+  return `/uploads/usuarios/${filename}`;
+};
+
+const buildFotoUrl = (req: Request, relativePath: string): string => {
+  const host = req.get('host') ?? 'localhost';
+  return `${req.protocol}://${host}${relativePath}`;
 };
 
 const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> => ({
@@ -68,7 +90,13 @@ export async function obtenerUsuarioPorUsuario(req: Request, res: Response) {
 // Agregar usuario
 export async function agregarUsuario(req: Request, res: Response) {
   try {
-    const nuevoUsuario = new UserModel(req.body);
+    const body = { ...req.body };
+    if (body.fotoBase64) {
+      const relativeFotoUrl = await saveBase64Image(body.fotoBase64);
+      body.fotoUrl = buildFotoUrl(req, relativeFotoUrl);
+      delete body.fotoBase64;
+    }
+    const nuevoUsuario = new UserModel(body);
     await nuevoUsuario.save();
     return res
       .status(201)
@@ -91,7 +119,13 @@ export async function modificarUsuario(req: Request, res: Response) {
         .status(200)
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
-    const usuarioActualizado = await UserModel.findByIdAndUpdate(id, req.body, { new: true });
+    const body = { ...req.body };
+    if (body.fotoBase64) {
+      const relativeFotoUrl = await saveBase64Image(body.fotoBase64);
+      body.fotoUrl = buildFotoUrl(req, relativeFotoUrl);
+      delete body.fotoBase64;
+    }
+    const usuarioActualizado = await UserModel.findByIdAndUpdate(id, body, { new: true });
     if (!usuarioActualizado) {
       return res
         .status(200)

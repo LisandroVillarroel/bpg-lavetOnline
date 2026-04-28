@@ -32,6 +32,7 @@ export interface IUsuario extends Document {
   tipoUsuario?: 'Laboratorio' | 'Veterinaria' | 'Usuario';
   veterinaria?: IVeterinaria;
   empresa?: IUsuarioEmpresa;
+  fotoUrl?: string;
   estadoUsuario?: 'Activo' | 'Bloqueado' | 'Suspendido';
   usuarioCrea?: string;
   usuarioModifica?: string;
@@ -77,6 +78,7 @@ const UsuarioSchema = new Schema<IUsuario>({
   tipoUsuario: { type: String, enum: ['Laboratorio', 'Veterinaria', 'Propietario'] },
   veterinaria: { type: VeterinariaSchema },
   empresa: { type: UsuarioEmpresaSchema },
+  fotoUrl: { type: String },
   estadoUsuario: { type: String },
   usuarioCrea: { type: String },
   usuarioModifica: { type: String },

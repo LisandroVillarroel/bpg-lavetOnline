@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
 import { connectMongo } from './config/mongo';
 import { logger } from './config/logger';
 
@@ -42,8 +44,13 @@ app.use((req, res, next) => {
   next();
 });
 */
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+const uploadsFolder = path.join(__dirname, '..', 'uploads');
+const uploadStaticFolder = path.join(uploadsFolder, 'usuarios');
+fs.mkdirSync(uploadStaticFolder, { recursive: true });
+app.use('/uploads', express.static(uploadsFolder));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Endpoint de prueba
 app.get('/health', (req, res) => {
