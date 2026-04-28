@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { hash } from 'bcryptjs';
 import { Request, Response } from 'express';
 import { UserModel } from '../user/user.model';
 
@@ -38,6 +39,21 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
   ...overrides,
 });
 
+const sanitizeUsuario = <T extends { toObject?: () => any; contrasena?: string } | null>(
+  usuario: T,
+) => {
+  if (!usuario) {
+    return null;
+  }
+
+  const data = typeof usuario.toObject === 'function' ? usuario.toObject() : { ...usuario };
+  delete data.contrasena;
+  return data;
+};
+
+const sanitizeUsuarios = <T extends { toObject?: () => any; contrasena?: string }>(usuarios: T[]) =>
+  usuarios.map((usuario) => sanitizeUsuario(usuario));
+
 const TEMAS_VALIDOS = [
   'rose-red-theme',
   'azure-blue-theme',
@@ -49,14 +65,19 @@ const TEMAS_VALIDOS = [
 export async function obtenerUsuarios(req: Request, res: Response) {
   try {
     const { empresaId } = req.params;
-    const filtro: any = { estadoUsuario: 'Activo' };
+    const filtro: any = { estado: 'Activo' };
     if (empresaId) filtro['empresa.empresaId'] = empresaId;
 
     console.log('Filtro para obtener usuarios:', filtro);
     const usuarios = await UserModel.find(filtro);
     return res
       .status(200)
-      .json(buildResponse({ data: usuarios, mensaje: 'Usuarios obtenidos correctamente' }));
+      .json(
+        buildResponse({
+          data: sanitizeUsuarios(usuarios),
+          mensaje: 'Usuarios obtenidos correctamente',
+        }),
+      );
   } catch (error) {
     return res
       .status(200)
@@ -73,13 +94,15 @@ export async function obtenerUsuarioPorUsuario(req: Request, res: Response) {
         .status(200)
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'Usuario requerido' }));
     }
-    const user = await UserModel.findOne({ usuario, estadoUsuario: 'Activo' });
+    const user = await UserModel.findOne({ usuario, estado: 'Activo' });
     if (!user) {
       return res
         .status(200)
         .json(buildResponse({ error: true, codigo: 404, mensaje: 'Usuario no encontrado' }));
     }
-    return res.status(200).json(buildResponse({ data: user, mensaje: 'Usuario encontrado' }));
+    return res
+      .status(200)
+      .json(buildResponse({ data: sanitizeUsuario(user), mensaje: 'Usuario encontrado' }));
   } catch (error) {
     return res
       .status(200)
@@ -91,6 +114,11 @@ export async function obtenerUsuarioPorUsuario(req: Request, res: Response) {
 export async function agregarUsuario(req: Request, res: Response) {
   try {
     const body = { ...req.body };
+
+    if (body.contrasena) {
+      body.contrasena = await hash(body.contrasena, 10);
+    }
+
     if (body.fotoBase64) {
       const relativeFotoUrl = await saveBase64Image(body.fotoBase64);
       body.fotoUrl = buildFotoUrl(req, relativeFotoUrl);
@@ -101,7 +129,11 @@ export async function agregarUsuario(req: Request, res: Response) {
     return res
       .status(201)
       .json(
-        buildResponse({ data: nuevoUsuario, mensaje: 'Usuario creado correctamente', codigo: 201 }),
+        buildResponse({
+          data: sanitizeUsuario(nuevoUsuario),
+          mensaje: 'Usuario creado correctamente',
+          codigo: 201,
+        }),
       );
   } catch (error) {
     return res
@@ -120,6 +152,11 @@ export async function modificarUsuario(req: Request, res: Response) {
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
     const body = { ...req.body };
+
+    if (body.contrasena) {
+      body.contrasena = await hash(body.contrasena, 10);
+    }
+
     if (body.fotoBase64) {
       const relativeFotoUrl = await saveBase64Image(body.fotoBase64);
       body.fotoUrl = buildFotoUrl(req, relativeFotoUrl);
@@ -134,7 +171,10 @@ export async function modificarUsuario(req: Request, res: Response) {
     return res
       .status(200)
       .json(
-        buildResponse({ data: usuarioActualizado, mensaje: 'Usuario actualizado correctamente' }),
+        buildResponse({
+          data: sanitizeUsuario(usuarioActualizado),
+          mensaje: 'Usuario actualizado correctamente',
+        }),
       );
   } catch (error) {
     return res
@@ -164,7 +204,12 @@ export async function eliminarUsuario(req: Request, res: Response) {
     }
     return res
       .status(200)
-      .json(buildResponse({ data: usuarioEliminado, mensaje: 'Usuario eliminado correctamente' }));
+      .json(
+        buildResponse({
+          data: sanitizeUsuario(usuarioEliminado),
+          mensaje: 'Usuario eliminado correctamente',
+        }),
+      );
   } catch (error) {
     return res
       .status(200)
@@ -195,7 +240,7 @@ export async function modificarMenuUsuario(req: Request, res: Response) {
     }
     return res.status(200).json(
       buildResponse({
-        data: usuarioActualizado,
+        data: sanitizeUsuario(usuarioActualizado),
         mensaje: 'Menú del usuario actualizado correctamente',
       }),
     );
@@ -255,7 +300,7 @@ export async function modificarTemaColorSistema(req: Request, res: Response) {
 
     return res.status(200).json(
       buildResponse({
-        data: usuarioActualizado,
+        data: sanitizeUsuario(usuarioActualizado),
         mensaje: 'Tema del sistema actualizado correctamente',
       }),
     );
