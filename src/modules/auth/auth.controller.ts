@@ -1,4 +1,6 @@
 import { UserModel } from '../user/user.model';
+import { Request, Response } from 'express';
+import { compare, hash } from 'bcryptjs';
 // Devuelve el usuario autenticado a partir del token
 export async function me(req: Request, res: Response) {
   // @ts-ignore
@@ -13,8 +15,6 @@ export async function me(req: Request, res: Response) {
   }
   res.json(usuario);
 }
-import { Request, Response } from 'express';
-import { compare } from 'bcryptjs';
 import jwt, { Secret } from 'jsonwebtoken';
 import { env } from '../../config/env';
 
@@ -89,6 +89,77 @@ export async function login(req: Request, res: Response) {
           expiresIn: env.JWT_EXPIRES_IN,
         },
       },
+    }),
+  );
+}
+
+export async function changePassword(req: Request, res: Response) {
+  // @ts-ignore
+  const userData = req.user;
+  if (!userData?.id) {
+    return res.status(401).json(
+      buildResponse({
+        error: true,
+        mensaje: 'No autorizado',
+        codigo: 401,
+      }),
+    );
+  }
+
+  const contrasenaActual = String(req.body?.contrasenaActual ?? '').trim();
+  const nuevaContrasena = String(req.body?.nuevaContrasena ?? '').trim();
+
+  if (!contrasenaActual || !nuevaContrasena) {
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        mensaje: 'La contraseña actual y la nueva contraseña son requeridas',
+        codigo: 400,
+      }),
+    );
+  }
+
+  if (nuevaContrasena.length < 6) {
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        mensaje: 'La nueva contraseña debe tener al menos 6 caracteres',
+        codigo: 400,
+      }),
+    );
+  }
+
+  const usuario = await UserModel.findById(userData.id);
+  if (!usuario) {
+    return res.status(404).json(
+      buildResponse({
+        error: true,
+        mensaje: 'Usuario no encontrado',
+        codigo: 404,
+      }),
+    );
+  }
+
+  const valid = await compare(contrasenaActual, usuario.contrasena ?? '');
+  if (!valid) {
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        mensaje: 'La contraseña actual es incorrecta',
+        codigo: 400,
+      }),
+    );
+  }
+
+  const nuevaContrasenaHash = await hash(nuevaContrasena, 10);
+  usuario.contrasena = nuevaContrasenaHash;
+  usuario.fechaHora_modifica = new Date();
+  await usuario.save();
+
+  return res.status(200).json(
+    buildResponse({
+      mensaje: 'Contraseña actualizada correctamente',
+      codigo: 200,
     }),
   );
 }
