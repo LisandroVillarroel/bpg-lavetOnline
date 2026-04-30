@@ -39,6 +39,20 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
   ...overrides,
 });
 
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const getDuplicateUsuarioMessage = (usuario: {
+  usuario?: unknown;
+  rutUsuario?: unknown;
+  email?: unknown;
+}) => {
+  if (usuario.usuario) {
+    return 'El Usuario ya existe';
+  }
+
+  return 'El Usuario ya existe';
+};
+
 const sanitizeUsuario = <T extends { toObject?: () => any; contrasena?: string } | null>(
   usuario: T,
 ) => {
@@ -70,14 +84,12 @@ export async function obtenerUsuarios(req: Request, res: Response) {
 
     console.log('Filtro para obtener usuarios:', filtro);
     const usuarios = await UserModel.find(filtro);
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          data: sanitizeUsuarios(usuarios),
-          mensaje: 'Usuarios obtenidos correctamente',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        data: sanitizeUsuarios(usuarios),
+        mensaje: 'Usuarios obtenidos correctamente',
+      }),
+    );
   } catch (error) {
     return res
       .status(200)
@@ -115,6 +127,27 @@ export async function agregarUsuario(req: Request, res: Response) {
   try {
     const body = { ...req.body };
 
+    const usuarioNormalizado = typeof body.usuario === 'string' ? body.usuario.trim() : '';
+
+    if (usuarioNormalizado) {
+      body.usuario = usuarioNormalizado;
+      const usuarioExistente = await UserModel.findOne({
+        usuario: { $regex: `^${escapeRegex(usuarioNormalizado)}$`, $options: 'i' },
+      })
+        .select('usuario')
+        .lean();
+
+      if (usuarioExistente) {
+        return res.status(200).json(
+          buildResponse({
+            error: true,
+            codigo: 409,
+            mensaje: getDuplicateUsuarioMessage(usuarioExistente),
+          }),
+        );
+      }
+    }
+
     if (body.contrasena) {
       body.contrasena = await hash(body.contrasena, 10);
     }
@@ -126,16 +159,34 @@ export async function agregarUsuario(req: Request, res: Response) {
     }
     const nuevoUsuario = new UserModel(body);
     await nuevoUsuario.save();
-    return res
-      .status(201)
-      .json(
+    return res.status(201).json(
+      buildResponse({
+        data: sanitizeUsuario(nuevoUsuario),
+        mensaje: 'Usuario creado correctamente',
+        codigo: 201,
+      }),
+    );
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 11000 &&
+      'keyPattern' in error
+    ) {
+      const duplicatedError = error as {
+        keyPattern?: { usuario?: number };
+      };
+
+      return res.status(200).json(
         buildResponse({
-          data: sanitizeUsuario(nuevoUsuario),
-          mensaje: 'Usuario creado correctamente',
-          codigo: 201,
+          error: true,
+          codigo: 409,
+          mensaje: getDuplicateUsuarioMessage(duplicatedError.keyPattern ?? {}),
         }),
       );
-  } catch (error) {
+    }
+
     return res
       .status(200)
       .json(buildResponse({ error: true, codigo: 500, mensaje: 'Error al crear usuario' }));
@@ -168,14 +219,12 @@ export async function modificarUsuario(req: Request, res: Response) {
         .status(200)
         .json(buildResponse({ error: true, codigo: 404, mensaje: 'Usuario no encontrado' }));
     }
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          data: sanitizeUsuario(usuarioActualizado),
-          mensaje: 'Usuario actualizado correctamente',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        data: sanitizeUsuario(usuarioActualizado),
+        mensaje: 'Usuario actualizado correctamente',
+      }),
+    );
   } catch (error) {
     return res
       .status(200)
@@ -202,14 +251,12 @@ export async function eliminarUsuario(req: Request, res: Response) {
         .status(200)
         .json(buildResponse({ error: true, codigo: 404, mensaje: 'Usuario no encontrado' }));
     }
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          data: sanitizeUsuario(usuarioEliminado),
-          mensaje: 'Usuario eliminado correctamente',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        data: sanitizeUsuario(usuarioEliminado),
+        mensaje: 'Usuario eliminado correctamente',
+      }),
+    );
   } catch (error) {
     return res
       .status(200)
