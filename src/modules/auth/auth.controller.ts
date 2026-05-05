@@ -1,4 +1,5 @@
 import { UserModel } from '../user/user.model';
+import Empresa from '../empresa/empresa.model';
 import { Request, Response } from 'express';
 import { compare, hash } from 'bcryptjs';
 // Devuelve el usuario autenticado a partir del token
@@ -13,7 +14,21 @@ export async function me(req: Request, res: Response) {
   if (!usuario) {
     return res.status(404).json({ error: true, mensaje: 'Usuario no encontrado', codigo: 404 });
   }
-  res.json(usuario);
+
+  // --- INICIO: Agregar MenuItem de la empresa al objeto empresa del usuario ---
+  let usuarioObj = usuario.toObject ? usuario.toObject() : { ...usuario };
+  if (usuarioObj.empresa && usuarioObj.empresa.empresaId) {
+    const empresaDoc = await Empresa.findById(usuarioObj.empresa.empresaId).lean();
+    if (empresaDoc && empresaDoc.MenuItem) {
+      usuarioObj.empresa = {
+        ...usuarioObj.empresa,
+        MenuItem: empresaDoc.MenuItem,
+      };
+    }
+  }
+  // --- FIN: Agregar MenuItem de la empresa ---
+
+  res.json(usuarioObj);
 }
 import jwt, { Secret } from 'jsonwebtoken';
 import { env } from '../../config/env';
@@ -79,10 +94,23 @@ export async function login(req: Request, res: Response) {
     expiresIn: String(env.REFRESH_TOKEN_EXPIRES_IN),
   } as jwt.SignOptions);
 
+  // --- INICIO: Agregar MenuItem de la empresa al objeto empresa del usuario ---
+  let usuarioObj = usuario.toObject ? usuario.toObject() : { ...usuario };
+  if (usuarioObj.empresa && usuarioObj.empresa.empresaId) {
+    const empresaDoc = await Empresa.findById(usuarioObj.empresa.empresaId).lean();
+    if (empresaDoc && empresaDoc.MenuItem) {
+      usuarioObj.empresa = {
+        ...usuarioObj.empresa,
+        MenuItem: empresaDoc.MenuItem,
+      };
+    }
+  }
+  // --- FIN: Agregar MenuItem de la empresa ---
+
   return res.status(200).json(
     buildResponse({
       data: {
-        usuario,
+        usuario: usuarioObj,
         tokens: {
           accessToken,
           refreshToken,

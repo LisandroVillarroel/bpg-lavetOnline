@@ -1,12 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { MenuItem, MenuItemSchema } from '../../shared/modulo/menu-item.interface';
-
 export interface IUsuarioEmpresa {
   empresaId: string;
   rutEmpresa: string;
   razonSocial: string;
   nombreFantasia: string;
   tipoEmpresa?: 'Laboratorio' | 'Veterinaria' | 'Usuario';
+  MenuItem?: MenuItem[]; // Menú de la empresa (opcional)
 }
 
 export interface IVeterinaria {
