@@ -21,5 +21,5 @@ export const MenuItemSchema = new Schema<MenuItem>(
     seleccionado: { type: Boolean },
     children: [{ type: Schema.Types.Mixed }],
   },
-  { _id: false },
+  { _id: true },
 );

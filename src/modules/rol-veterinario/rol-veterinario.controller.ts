@@ -109,9 +109,10 @@ export async function modificarRolVeterinario(req: Request, res: Response) {
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
 
+    const usuarioModifica = req.user?._id || req.user?.id || 'sistema';
     const updateData = {
       ...req.body,
-      usuarioModifica: req.body.usuarioModifica || 'sistema',
+      usuarioModifica,
     };
 
     const rolActualizado = await RolVeterinario.findByIdAndUpdate(id, updateData, { new: true });
@@ -149,9 +150,10 @@ export async function eliminarRolVeterinario(req: Request, res: Response) {
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
 
+    const usuarioModifica = req.user?._id || req.user?.id || 'sistema';
     const rolEliminado = await RolVeterinario.findByIdAndUpdate(
       id,
-      { estado: 'Bloqueado' },
+      { estado: 'Bloqueado', usuarioModifica },
       { new: true },
     );
 

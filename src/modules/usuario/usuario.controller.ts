@@ -213,7 +213,12 @@ export async function modificarUsuario(req: Request, res: Response) {
       body.fotoUrl = buildFotoUrl(req, relativeFotoUrl);
       delete body.fotoBase64;
     }
-    const usuarioActualizado = await UserModel.findByIdAndUpdate(id, body, { new: true });
+    const usuarioModifica = req.user?._id || req.user?.id || 'sistema';
+    const usuarioActualizado = await UserModel.findByIdAndUpdate(
+      id,
+      { ...body, usuarioModifica },
+      { new: true },
+    );
     if (!usuarioActualizado) {
       return res
         .status(200)
@@ -241,9 +246,10 @@ export async function eliminarUsuario(req: Request, res: Response) {
         .status(200)
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
+    const usuarioModifica = req.user?._id || req.user?.id || 'sistema';
     const usuarioEliminado = await UserModel.findByIdAndUpdate(
       id,
-      { estadoUsuario: 'Bloqueado' },
+      { estadoUsuario: 'Bloqueado', usuarioModifica },
       { new: true },
     );
     if (!usuarioEliminado) {

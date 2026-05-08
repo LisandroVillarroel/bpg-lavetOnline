@@ -109,9 +109,10 @@ export async function modificarTipoVeterinario(req: Request, res: Response) {
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
 
+    const usuarioModifica = req.user?._id || req.user?.id || 'sistema';
     const updateData = {
       ...req.body,
-      usuarioModifica: req.body.usuarioModifica || 'sistema',
+      usuarioModifica,
     };
 
     const tipoActualizado = await TipoVeterinarioModel.findByIdAndUpdate(id, updateData, {
@@ -152,9 +153,10 @@ export async function eliminarTipoVeterinario(req: Request, res: Response) {
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
 
+    const usuarioModifica = req.user?._id || req.user?.id || 'sistema';
     const tipoEliminado = await TipoVeterinarioModel.findByIdAndUpdate(
       id,
-      { estado: 'Bloqueado' },
+      { estado: 'Bloqueado', usuarioModifica },
       { new: true },
     );
 

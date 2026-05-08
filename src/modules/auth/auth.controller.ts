@@ -6,11 +6,11 @@ import { compare, hash } from 'bcryptjs';
 export async function me(req: Request, res: Response) {
   // @ts-ignore
   const userData = req.user;
-  if (!userData || !userData.id) {
+  if (!userData || !userData._id) {
     return res.status(401).json({ error: true, mensaje: 'No autorizado', codigo: 401 });
   }
   // Busca el usuario en la base de datos usando el campo correcto
-  const usuario = await UserModel.findById(userData.id).select('-contrasena');
+  const usuario = await UserModel.findById(userData._id).select('-contrasena');
   if (!usuario) {
     return res.status(404).json({ error: true, mensaje: 'Usuario no encontrado', codigo: 404 });
   }
@@ -87,10 +87,10 @@ export async function login(req: Request, res: Response) {
     );
   }
   const jwtSecret: Secret = env.JWT_SECRET as string;
-  const accessToken = jwt.sign({ id: usuario._id, tipoUsuario: usuario.tipoUsuario }, jwtSecret, {
+  const accessToken = jwt.sign({ _id: usuario._id, tipoUsuario: usuario.tipoUsuario }, jwtSecret, {
     expiresIn: String(env.JWT_EXPIRES_IN),
   } as jwt.SignOptions);
-  const refreshToken = jwt.sign({ id: usuario._id }, jwtSecret, {
+  const refreshToken = jwt.sign({ _id: usuario._id }, jwtSecret, {
     expiresIn: String(env.REFRESH_TOKEN_EXPIRES_IN),
   } as jwt.SignOptions);
 
@@ -124,7 +124,7 @@ export async function login(req: Request, res: Response) {
 export async function changePassword(req: Request, res: Response) {
   // @ts-ignore
   const userData = req.user;
-  if (!userData?.id) {
+  if (!userData?._id) {
     return res.status(401).json(
       buildResponse({
         error: true,
@@ -157,7 +157,7 @@ export async function changePassword(req: Request, res: Response) {
     );
   }
 
-  const usuario = await UserModel.findById(userData.id);
+  const usuario = await UserModel.findById(userData._id);
   if (!usuario) {
     return res.status(404).json(
       buildResponse({

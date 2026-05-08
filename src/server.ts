@@ -13,9 +13,9 @@ import empresaRoutes from './modules/empresa/empresa.routes';
 import tipoVeterinarioRoutes from './modules/tipo-veterinario/tipo-veterinario.routes';
 import rolVeterinarioRoutes from './modules/rol-veterinario/rol-veterinario.routes';
 import regionComunaRoutes from './modules/region-comuna/region-comuna.routes';
+import especieRoutes from './modules/especie/especie.routes';
 
 const app = express();
-
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -70,13 +70,16 @@ app.use('/api/usuario', authenticateToken, usuarioRoutes);
 app.use('/api/empresa', authenticateToken, empresaRoutes);
 
 // Rutas de tipo veterinario
-app.use('/api/tipo-veterinario', tipoVeterinarioRoutes);
+app.use('/api/tipo-veterinario', authenticateToken, tipoVeterinarioRoutes);
 
 // Rutas de rol veterinario
 app.use('/api/rol-veterinario', authenticateToken, rolVeterinarioRoutes);
 
 // Rutas de región y comuna
 app.use('/api/region-comuna', authenticateToken, regionComunaRoutes);
+
+// Rutas de especie
+app.use('/api/especie', authenticateToken, especieRoutes);
 
 const startServer = async () => {
   await connectMongo();

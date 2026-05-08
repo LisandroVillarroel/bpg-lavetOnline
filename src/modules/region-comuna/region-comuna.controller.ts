@@ -28,14 +28,12 @@ export async function obtenerRegionComunas(_req: Request, res: Response) {
       }))
       .sort((a, b) => a.region.localeCompare(b.region, 'es', { sensitivity: 'base' }));
 
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          data: regionesOrdenadas,
-          mensaje: 'Regiones y comunas obtenidas correctamente',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        data: regionesOrdenadas,
+        mensaje: 'Regiones y comunas obtenidas correctamente',
+      }),
+    );
   } catch (error) {
     return res
       .status(200)
@@ -161,9 +159,11 @@ export async function modificarRegionComuna(req: Request, res: Response) {
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
 
+    // Se asume que req.user._id contiene el id del usuario autenticado
+    const usuarioModifica_id = req.user?._id || 'sistema';
     const updateData = {
       ...req.body,
-      usuarioModifica_id: req.body.usuarioModifica_id || 'sistema',
+      usuarioModifica_id,
     };
 
     const regionComunaActualizada = await RegionComunaModel.findByIdAndUpdate(id, updateData, {
@@ -200,9 +200,11 @@ export async function eliminarRegionComuna(req: Request, res: Response) {
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
 
+    // Se asume que req.user._id contiene el id del usuario autenticado
+    const usuarioModifica_id = req.user?._id || 'sistema';
     const regionComunaEliminada = await RegionComunaModel.findByIdAndUpdate(
       id,
-      { estado: 'Borrado' },
+      { estado: 'Borrado', usuarioModifica_id },
       { new: true },
     );
 

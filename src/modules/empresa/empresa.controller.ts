@@ -87,9 +87,10 @@ export async function modificarEmpresa(req: Request, res: Response) {
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
     const now = new Date();
+    const usuarioModifica = req.user?._id || req.user?.id || 'sistema';
     const updateData = {
       ...req.body,
-      usuarioModifica: req.body.usuarioModifica || 'sistema',
+      usuarioModifica,
       fechaHora_modifica: now,
     };
     const empresaActualizada = await Empresa.findByIdAndUpdate(id, updateData, { new: true });
@@ -119,9 +120,10 @@ export async function eliminarEmpresa(req: Request, res: Response) {
         .status(200)
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
+    const usuarioModifica = req.user?._id || req.user?.id || 'sistema';
     const empresaEliminada = await Empresa.findByIdAndUpdate(
       id,
-      { estadoEmpresa: 'Bloqueado' },
+      { estadoEmpresa: 'Bloqueado', usuarioModifica },
       { new: true },
     );
     if (!empresaEliminada) {
