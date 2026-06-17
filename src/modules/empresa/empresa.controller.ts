@@ -16,6 +16,24 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
   ...overrides,
 });
 
+const getDuplicateEmpresaMessage = (keyPattern: Record<string, unknown> = {}): string => {
+  if (keyPattern['rutEmpresa']) {
+    return 'Ya existe una empresa registrada con ese RUT';
+  }
+
+  return 'Ya existe una empresa con esos datos';
+};
+
+const getValidationEmpresaMessage = (error: unknown): string | null => {
+  if (typeof error !== 'object' || error === null || !('errors' in error)) {
+    return null;
+  }
+
+  const errors = (error as { errors?: Record<string, { message?: string }> }).errors;
+  const firstError = errors ? Object.values(errors)[0] : undefined;
+  return firstError?.message?.trim() || null;
+};
+
 // Consultar todas las empresas (solo activas)
 export async function obtenerEmpresas(_req: Request, res: Response) {
   try {
@@ -71,6 +89,37 @@ export async function agregarEmpresa(req: Request, res: Response) {
         buildResponse({ data: nuevaEmpresa, mensaje: 'Empresa creada correctamente', codigo: 201 }),
       );
   } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 11000 &&
+      'keyPattern' in error
+    ) {
+      const duplicatedError = error as {
+        keyPattern?: Record<string, unknown>;
+      };
+
+      return res.status(200).json(
+        buildResponse({
+          error: true,
+          codigo: 409,
+          mensaje: getDuplicateEmpresaMessage(duplicatedError.keyPattern ?? {}),
+        }),
+      );
+    }
+
+    const validationMessage = getValidationEmpresaMessage(error);
+    if (validationMessage) {
+      return res.status(200).json(
+        buildResponse({
+          error: true,
+          codigo: 400,
+          mensaje: validationMessage,
+        }),
+      );
+    }
+
     return res
       .status(200)
       .json(buildResponse({ error: true, codigo: 500, mensaje: 'Error al crear empresa' }));

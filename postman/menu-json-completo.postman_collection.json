@@ -1,0 +1,134 @@
+{
+  "info": {
+    "_postman_id": "2fbd7d86-ea97-45b4-8f5e-12c49063c20d",
+    "name": "Lavet Menu JSON Completo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Coleccion Postman para pegar el JSON completo del menu Veterinaria y actualizar la tabla menus usando PUT /api/menu/:id."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "menuId",
+      "value": "69d84e67a3274a7d6177c1d9"
+    },
+    {
+      "key": "usuarioModificaId",
+      "value": ""
+    },
+    {
+      "key": "menuJsonCompleto",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Actualizar menu completo desde JSON pegado",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const raw = pm.collectionVariables.get('menuJsonCompleto');",
+              "if (!raw || !raw.trim()) {",
+              "  throw new Error('Debes pegar el JSON completo en la variable menuJsonCompleto de la coleccion.');",
+              "}",
+              "let parsed;",
+              "try {",
+              "  parsed = JSON.parse(raw);",
+              "} catch (error) {",
+              "  throw new Error('El JSON pegado no es valido. Revisa comas, llaves y corchetes.');",
+              "}",
+              "function normalize(value) {",
+              "  if (Array.isArray(value)) {",
+              "    return value.map(normalize);",
+              "  }",
+              "  if (value && typeof value === 'object') {",
+              "    const keys = Object.keys(value);",
+              "    if (keys.length === 1 && keys[0] === '$oid') return value.$oid;",
+              "    if (keys.length === 1 && keys[0] === '$date') return value.$date;",
+              "    const result = {};",
+              "    for (const [key, innerValue] of Object.entries(value)) {",
+              "      if (key === '__v' || key === 'fechaHora_crea' || key === 'fechaHora_modifica') continue;",
+              "      result[key] = normalize(innerValue);",
+              "    }",
+              "    return result;",
+              "  }",
+              "  return value;",
+              "}",
+              "const normalized = normalize(parsed);",
+              "if (!normalized.nombreMenu || !normalized.menuItem || !Array.isArray(normalized.menuItem)) {",
+              "  throw new Error('El JSON debe contener nombreMenu y menuItem[].');",
+              "}",
+              "const resolvedMenuId = pm.collectionVariables.get('menuId') || normalized._id || '';",
+              "if (!resolvedMenuId) {",
+              "  throw new Error('No existe menuId ni en la coleccion ni en el JSON pegado.');",
+              "}",
+              "pm.collectionVariables.set('menuId', resolvedMenuId);",
+              "const body = {",
+              "  nombreMenu: normalized.nombreMenu,",
+              "  menuItem: normalized.menuItem,",
+              "  estado: normalized.estado || 'Activo',",
+              "  usuarioModifica_id: pm.collectionVariables.get('usuarioModificaId') || ''",
+              "};",
+              "pm.variables.set('requestBodyTransformado', JSON.stringify(body, null, 2));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{requestBodyTransformado}}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/menu/{{menuId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "menu", "{{menuId}}"]
+        },
+        "description": "Pega el JSON completo del menu en la variable menuJsonCompleto y ejecuta este request. El script convierte $oid/$date y envia el body que espera la API."
+      },
+      "response": []
+    },
+    {
+      "name": "Obtener menu por ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/menu/id/{{menuId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "menu", "id", "{{menuId}}"]
+        },
+        "description": "Consulta el menu actual para verificar el cambio despues del PUT."
+      },
+      "response": []
+    }
+  ]
+}

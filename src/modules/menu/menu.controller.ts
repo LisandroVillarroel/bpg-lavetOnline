@@ -1,6 +1,26 @@
 import { Request, Response } from 'express';
 import { MenuModel, IMenu, IMenuItem } from './menu.model';
 
+const TIPOS_MENU_VALIDOS = ['Laboratorio', 'Veterinaria', 'Propietario', 'Administración'];
+
+const normalizeMenuType = (value?: string | null): string =>
+  (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLocaleLowerCase('es');
+
+const findCanonicalMenuType = (tipo?: string | null): string | null => {
+  const normalizedTipo = normalizeMenuType(tipo);
+  if (!normalizedTipo) {
+    return null;
+  }
+
+  return (
+    TIPOS_MENU_VALIDOS.find((validTipo) => normalizeMenuType(validTipo) === normalizedTipo) ?? null
+  );
+};
+
 type ApiResponse<T> = {
   error: boolean;
   data: T | null;
@@ -43,12 +63,13 @@ export async function obtenerMenus(req: Request, res: Response) {
 }
 
 /**
- * Obtener menú por tipo (Laboratorio, Veterinaria, Propietario)
+ * Obtener menú por tipo (Laboratorio, Veterinaria, Propietario, Administracion)
  * GET /api/menu/:tipo
  */
 export async function obtenerMenuPorTipo(req: Request, res: Response) {
   try {
     const { tipo } = req.params;
+    const canonicalTipo = findCanonicalMenuType(tipo);
 
     if (!tipo) {
       return res.status(200).json(
@@ -60,17 +81,21 @@ export async function obtenerMenuPorTipo(req: Request, res: Response) {
       );
     }
 
-    if (!['Laboratorio', 'Veterinaria', 'Propietario'].includes(tipo)) {
+    if (!canonicalTipo) {
       return res.status(200).json(
         buildResponse({
           error: true,
           codigo: 400,
-          mensaje: 'Tipo debe ser: Laboratorio, Veterinaria o Propietario',
+          mensaje: 'Tipo debe ser: Laboratorio, Veterinaria, Propietario o Administración',
         }),
       );
     }
 
-    const menu = await MenuModel.findOne({ nombreMenu: tipo });
+    console.log('Buscando menú para tipo Empresa:', tipo, 'normalizado a:', canonicalTipo);
+    const menus = await MenuModel.find().lean();
+    const menu = menus.find(
+      (menuItem) => normalizeMenuType(menuItem.nombreMenu) === normalizeMenuType(canonicalTipo),
+    );
 
     if (!menu) {
       return res.status(200).json(
@@ -81,7 +106,7 @@ export async function obtenerMenuPorTipo(req: Request, res: Response) {
         }),
       );
     }
-
+    console.log('Menú encontrado:', menu);
     return res.status(200).json(
       buildResponse({
         data: menu,
@@ -168,12 +193,12 @@ export async function crearMenu(req: Request, res: Response) {
       );
     }
 
-    if (!['Laboratorio', 'Veterinaria', 'Propietario'].includes(nombreMenu)) {
+    if (!TIPOS_MENU_VALIDOS.includes(nombreMenu)) {
       return res.status(200).json(
         buildResponse({
           error: true,
           codigo: 400,
-          mensaje: 'nombreMenu debe ser: Laboratorio, Veterinaria o Propietario',
+          mensaje: 'nombreMenu debe ser: Laboratorio, Veterinaria, Propietario o Administración',
         }),
       );
     }

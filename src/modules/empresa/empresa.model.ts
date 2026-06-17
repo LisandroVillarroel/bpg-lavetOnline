@@ -6,6 +6,8 @@ export interface Empresa extends Document {
   razonSocial: string;
   nombreFantasia: string;
   direccion: string;
+  region: string;
+  comuna: string;
   telefono: string;
   emailEmpresa: string;
   contacto: {
@@ -13,7 +15,7 @@ export interface Empresa extends Document {
     emailContacto: string;
     telefonoContacto: string;
   };
-  tipoEmpresa: string; // (Laboratorio-Veterinaria)
+  tipoEmpresa: 'Laboratorio' | 'Veterinaria' | 'Administración';
   MenuItem: MenuItem[];
   estadoEmpresa: 'Activo' | 'Bloqueado';
   usuarioCrea?: string;
@@ -27,6 +29,8 @@ const EmpresaSchema = new Schema<Empresa>({
   razonSocial: { type: String, required: true },
   nombreFantasia: { type: String, required: true },
   direccion: { type: String, required: true },
+  region: { type: String, required: true },
+  comuna: { type: String, required: true },
   telefono: { type: String, required: true },
   emailEmpresa: { type: String, required: true },
   contacto: {
@@ -34,7 +38,11 @@ const EmpresaSchema = new Schema<Empresa>({
     emailContacto: { type: String, required: true },
     telefonoContacto: { type: String, required: true },
   },
-  tipoEmpresa: { type: String, required: true },
+  tipoEmpresa: {
+    type: String,
+    enum: ['Laboratorio', 'Veterinaria', 'Administración'],
+    required: true,
+  },
   MenuItem: [MenuItemSchema],
   estadoEmpresa: { type: String, enum: ['Activo', 'Bloqueado'], default: 'Activo' },
   usuarioCrea: { type: String },

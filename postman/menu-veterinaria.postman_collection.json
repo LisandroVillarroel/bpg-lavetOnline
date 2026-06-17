@@ -1,0 +1,139 @@
+{
+  "info": {
+    "_postman_id": "8c77d270-8c56-4bbf-94a3-4c48472f7f01",
+    "name": "Lavet Menu Veterinaria",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Coleccion Postman para consultar y actualizar el menu Veterinaria, incluyendo la incorporacion del item Categoria. Requiere token Bearer valido."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "menuId",
+      "value": "69d84e67a3274a7d6177c1d9"
+    },
+    {
+      "key": "usuarioModificaId",
+      "value": ""
+    },
+    {
+      "key": "usuarioCreaId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Obtener menu Veterinaria por ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/menu/id/{{menuId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "menu", "id", "{{menuId}}"]
+        },
+        "description": "Consulta el menu actual antes de modificarlo."
+      },
+      "response": []
+    },
+    {
+      "name": "Actualizar items menu Veterinaria",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"usuarioModifica_id\": \"{{usuarioModificaId}}\",\n  \"menuItem\": [\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1da\",\n      \"despliegaNombre\": \"Portada\",\n      \"iconoNombre\": \"dashboard\",\n      \"route\": \"portada\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1db\",\n      \"despliegaNombre\": \"Fichas\",\n      \"iconoNombre\": \"folder_open\",\n      \"route\": \"fichas\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1dc\",\n      \"despliegaNombre\": \"Pagos\",\n      \"iconoNombre\": \"payments\",\n      \"route\": \"pagos\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1dd\",\n      \"despliegaNombre\": \"Mantenedores\",\n      \"iconoNombre\": \"format_list_bulleted\",\n      \"route\": \"mantenedores\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": [\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1de\",\n          \"despliegaNombre\": \"Usuarios\",\n          \"iconoNombre\": \"group\",\n          \"route\": \"usuarios\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1df\",\n          \"despliegaNombre\": \"Clientes\",\n          \"iconoNombre\": \"handshake\",\n          \"route\": \"cliente\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"despliegaNombre\": \"Categoría\",\n          \"iconoNombre\": \"category\",\n          \"route\": \"categoria\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1e0\",\n          \"despliegaNombre\": \"Exámen\",\n          \"iconoNombre\": \"assignment\",\n          \"route\": \"examen\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1e1\",\n          \"despliegaNombre\": \"Especie\",\n          \"iconoNombre\": \"pets\",\n          \"route\": \"especie\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1e2\",\n          \"despliegaNombre\": \"Raza\",\n          \"iconoNombre\": \"fingerprint\",\n          \"route\": \"raza\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/menu/{{menuId}}/items",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "menu", "{{menuId}}", "items"]
+        },
+        "description": "Actualiza solo el arreglo menuItem del menu Veterinaria y agrega el nuevo item Categoria dentro de Mantenedores."
+      },
+      "response": []
+    },
+    {
+      "name": "Actualizar menu completo Veterinaria",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombreMenu\": \"Veterinaria\",\n  \"estado\": \"Activo\",\n  \"usuarioModifica_id\": \"{{usuarioModificaId}}\",\n  \"menuItem\": [\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1da\",\n      \"despliegaNombre\": \"Portada\",\n      \"iconoNombre\": \"dashboard\",\n      \"route\": \"portada\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1db\",\n      \"despliegaNombre\": \"Fichas\",\n      \"iconoNombre\": \"folder_open\",\n      \"route\": \"fichas\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1dc\",\n      \"despliegaNombre\": \"Pagos\",\n      \"iconoNombre\": \"payments\",\n      \"route\": \"pagos\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1dd\",\n      \"despliegaNombre\": \"Mantenedores\",\n      \"iconoNombre\": \"format_list_bulleted\",\n      \"route\": \"mantenedores\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": [\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1de\",\n          \"despliegaNombre\": \"Usuarios\",\n          \"iconoNombre\": \"group\",\n          \"route\": \"usuarios\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1df\",\n          \"despliegaNombre\": \"Clientes\",\n          \"iconoNombre\": \"handshake\",\n          \"route\": \"cliente\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"despliegaNombre\": \"Categoría\",\n          \"iconoNombre\": \"category\",\n          \"route\": \"categoria\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1e0\",\n          \"despliegaNombre\": \"Exámen\",\n          \"iconoNombre\": \"assignment\",\n          \"route\": \"examen\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1e1\",\n          \"despliegaNombre\": \"Especie\",\n          \"iconoNombre\": \"pets\",\n          \"route\": \"especie\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1e2\",\n          \"despliegaNombre\": \"Raza\",\n          \"iconoNombre\": \"fingerprint\",\n          \"route\": \"raza\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/menu/{{menuId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "menu", "{{menuId}}"]
+        },
+        "description": "Actualiza el documento completo del menu Veterinaria. Usa este request solo si necesitas modificar ademas nombreMenu o estado."
+      },
+      "response": []
+    },
+    {
+      "name": "Crear menu nuevo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombreMenu\": \"Laboratorio\",\n  \"estado\": \"Activo\",\n  \"usuarioCrea_id\": \"{{usuarioCreaId}}\",\n  \"menuItem\": [\n    {\n      \"despliegaNombre\": \"Portada\",\n      \"iconoNombre\": \"dashboard\",\n      \"route\": \"portada\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/menu",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "menu"]
+        },
+        "description": "Plantilla para crear un menu nuevo. No usar con Veterinaria si ese menu ya existe porque el backend lo rechaza por duplicado."
+      },
+      "response": []
+    }
+  ]
+}

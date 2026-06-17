@@ -40,6 +40,8 @@ type ApiResponse<T> = {
   mensaje: string;
 };
 
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> => ({
   error: false,
   data: null,
@@ -49,9 +51,8 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
 });
 
 export async function login(req: Request, res: Response) {
-  console.log('req.body:', req.body);
-  const usuario_ = req.body.usuario;
-  const contrasena_ = req.body.contrasena;
+  const usuario_ = String(req.body.usuario ?? '').trim();
+  const contrasena_ = String(req.body.contrasena ?? '');
 
   if (!usuario_ || !contrasena_) {
     return res.status(200).json(
@@ -64,9 +65,11 @@ export async function login(req: Request, res: Response) {
   }
   // Buscar por usuario o rutUsuario
   const usuario = await UserModel.findOne({
-    $or: [{ usuario: usuario_ }, { rutUsuario: usuario_ }],
+    $or: [
+      { usuario: { $regex: `^${escapeRegex(usuario_)}$`, $options: 'i' } },
+      { rutUsuario: usuario_ },
+    ],
   });
-  console.log('suaruio encontrado:', usuario);
   if (!usuario) {
     return res.status(200).json(
       buildResponse({

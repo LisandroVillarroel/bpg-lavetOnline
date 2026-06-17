@@ -18,9 +18,7 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
 
 export async function getAll(req: Request, res: Response) {
   try {
-    console.log('Query parameters:', req.query);
     const { empresa_Id } = req.query;
-    console.log('empresa_Id:', empresa_Id);
     const filter: any = { estado: 'Activo' };
     if (typeof empresa_Id === 'string' && empresa_Id) filter.empresa_Id = empresa_Id;
     const especies = await Especie.find(filter);
@@ -39,7 +37,6 @@ export async function getAll(req: Request, res: Response) {
 
 export async function getById(req: Request, res: Response) {
   try {
-    console.log('ID recibido uno:', req.params.id);
     const especie = await Especie.findById(req.params.id);
     if (!especie || especie.estado === 'Borrado') {
       return res
@@ -81,7 +78,6 @@ export async function update(req: Request, res: Response) {
   try {
     const data = req.body;
     // Se asume que req.user._id contiene el id del usuario autenticado
-    console.log('req.user en update:', req.user);
     const usuarioModifica_id = req.user?._id || req.user?.id;
     const especie = await Especie.findByIdAndUpdate(
       req.params.id,
@@ -110,7 +106,6 @@ export async function update(req: Request, res: Response) {
 export async function remove(req: Request, res: Response) {
   try {
     // Se asume que req.user._id contiene el id del usuario autenticado
-    console.log('req.user en remove:', req.user);
     const usuarioModifica_id = req.user?._id || req.user?.id;
     const especie = await Especie.findByIdAndUpdate(
       req.params.id,

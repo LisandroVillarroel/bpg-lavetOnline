@@ -5,7 +5,7 @@ export interface IUsuarioEmpresa {
   rutEmpresa: string;
   razonSocial: string;
   nombreFantasia: string;
-  tipoEmpresa?: 'Laboratorio' | 'Veterinaria' | 'Usuario';
+  tipoEmpresa?: 'Laboratorio' | 'Veterinaria' | 'Administración';
   MenuItem?: MenuItem[]; // Menú de la empresa (opcional)
 }
 
@@ -29,7 +29,7 @@ export interface IUsuario extends Document {
   region?: String;
   comuna?: string;
   MenuItem?: MenuItem[];
-  tipoUsuario?: 'Laboratorio' | 'Veterinaria' | 'Usuario';
+  tipoUsuario?: 'Laboratorio' | 'Veterinaria' | 'Administración' | 'Propietario';
   veterinaria?: IVeterinaria;
   empresa?: IUsuarioEmpresa;
   fotoUrl?: string;

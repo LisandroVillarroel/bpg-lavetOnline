@@ -19,6 +19,7 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
 export async function obtenerTiposVeterinario(req: Request, res: Response) {
   try {
     const { idEmpresa } = req.query;
+    console.log('Obteniendo tipos de veterinario para idEmpresa:', idEmpresa);
     const filtro: Record<string, unknown> = { estado: 'Activo' };
     if (typeof idEmpresa === 'string' && idEmpresa.trim().length > 0) {
       filtro.idEmpresa = idEmpresa.trim();

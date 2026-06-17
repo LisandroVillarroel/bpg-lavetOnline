@@ -82,7 +82,6 @@ export async function obtenerUsuarios(req: Request, res: Response) {
     const filtro: any = { estado: 'Activo' };
     if (empresaId) filtro['empresa.empresaId'] = empresaId;
 
-    console.log('Filtro para obtener usuarios:', filtro);
     const usuarios = await UserModel.find(filtro);
     return res.status(200).json(
       buildResponse({
@@ -100,13 +99,16 @@ export async function obtenerUsuarios(req: Request, res: Response) {
 // Consultar usuario por nombre de usuario
 export async function obtenerUsuarioPorUsuario(req: Request, res: Response) {
   try {
-    const { usuario } = req.params;
+    const usuario = String(req.params.usuario ?? '').trim();
     if (!usuario) {
       return res
         .status(200)
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'Usuario requerido' }));
     }
-    const user = await UserModel.findOne({ usuario, estado: 'Activo' });
+    const user = await UserModel.findOne({
+      usuario: { $regex: `^${escapeRegex(usuario)}$`, $options: 'i' },
+      estado: 'Activo',
+    });
     if (!user) {
       return res
         .status(200)

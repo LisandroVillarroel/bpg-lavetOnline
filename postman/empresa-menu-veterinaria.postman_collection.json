@@ -1,0 +1,53 @@
+{
+  "info": {
+    "_postman_id": "2d4b8066-6ef5-4865-b00f-0924a3be7938",
+    "name": "Lavet Empresa Menu Veterinaria",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Coleccion Postman para actualizar el MenuItem de una empresa por el endpoint /api/empresa/modificar-menu/:id. Requiere token Bearer valido."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "empresaId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Actualizar menu de empresa Veterinaria",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"MenuItem\": [\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1da\",\n      \"despliegaNombre\": \"Portada\",\n      \"iconoNombre\": \"dashboard\",\n      \"route\": \"portada\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1db\",\n      \"despliegaNombre\": \"Fichas\",\n      \"iconoNombre\": \"folder_open\",\n      \"route\": \"fichas\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1dc\",\n      \"despliegaNombre\": \"Pagos\",\n      \"iconoNombre\": \"payments\",\n      \"route\": \"pagos\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"_id\": \"69d84e67a3274a7d6177c1dd\",\n      \"despliegaNombre\": \"Mantenedores\",\n      \"iconoNombre\": \"format_list_bulleted\",\n      \"route\": \"mantenedores\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": [\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1de\",\n          \"despliegaNombre\": \"Usuarios\",\n          \"iconoNombre\": \"group\",\n          \"route\": \"usuarios\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1df\",\n          \"despliegaNombre\": \"Clientes\",\n          \"iconoNombre\": \"handshake\",\n          \"route\": \"cliente\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"despliegaNombre\": \"Categoría\",\n          \"iconoNombre\": \"category\",\n          \"route\": \"categoria\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1e0\",\n          \"despliegaNombre\": \"Exámen\",\n          \"iconoNombre\": \"assignment\",\n          \"route\": \"examen\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1e1\",\n          \"despliegaNombre\": \"Especie\",\n          \"iconoNombre\": \"pets\",\n          \"route\": \"especie\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"_id\": \"69d84e67a3274a7d6177c1e2\",\n          \"despliegaNombre\": \"Raza\",\n          \"iconoNombre\": \"fingerprint\",\n          \"route\": \"raza\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/empresa/modificar-menu/{{empresaId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "empresa", "modificar-menu", "{{empresaId}}"]
+        },
+        "description": "Actualiza el campo MenuItem de una empresa. Este endpoint espera la propiedad MenuItem con M mayuscula."
+      },
+      "response": []
+    }
+  ]
+}

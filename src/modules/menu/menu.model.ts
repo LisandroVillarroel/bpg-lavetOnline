@@ -11,7 +11,7 @@ export interface IMenuItem {
 }
 
 export interface IMenu extends Document {
-  nombreMenu: 'Laboratorio' | 'Veterinaria' | 'Propietario';
+  nombreMenu: 'Laboratorio' | 'Veterinaria' | 'Propietario' | 'Administración';
   menuItem: IMenuItem[];
   estado?: 'Activo' | 'Inactivo';
   usuarioCrea_id?: string;
@@ -41,7 +41,7 @@ const MenuSchema = new Schema<IMenu>(
   {
     nombreMenu: {
       type: String,
-      enum: ['Laboratorio', 'Veterinaria', 'Propietario'],
+      enum: ['Laboratorio', 'Veterinaria', 'Propietario', 'Administración'],
       required: true,
     },
     menuItem: [MenuItemSchema],
