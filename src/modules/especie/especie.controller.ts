@@ -1,5 +1,6 @@
 import Especie from './especie.model';
 import { Request, Response } from 'express';
+import Raza from '../raza/raza.model';
 
 type ApiResponse<T> = {
   error: boolean;
@@ -79,20 +80,43 @@ export async function update(req: Request, res: Response) {
     const data = req.body;
     // Se asume que req.user._id contiene el id del usuario autenticado
     const usuarioModifica_id = req.user?._id || req.user?.id;
+    const especieActual = await Especie.findById(req.params.id);
+
+    if (!especieActual) {
+      return res
+        .status(200)
+        .json(buildResponse({ error: true, codigo: 404, mensaje: 'Especie no encontrada' }));
+    }
+
+    const nombreAnterior = String(especieActual.nombre ?? '').trim();
+    const nombreNuevo = typeof data?.nombre === 'string' ? data.nombre.trim() : nombreAnterior;
     const especie = await Especie.findByIdAndUpdate(
       req.params.id,
       {
         ...data,
+        nombre: nombreNuevo,
         usuarioModifica_id,
         fechaHora_Modifica: new Date(),
       },
       { new: true },
     );
-    if (!especie) {
-      return res
-        .status(200)
-        .json(buildResponse({ error: true, codigo: 404, mensaje: 'Especie no encontrada' }));
+
+    if (nombreAnterior && nombreNuevo && nombreAnterior !== nombreNuevo) {
+      await Raza.updateMany(
+        {
+          empresa_Id: especieActual.empresa_Id,
+          especieNombre: nombreAnterior,
+        },
+        {
+          $set: {
+            especieNombre: nombreNuevo,
+            usuarioModifica_id,
+            fechaHora_Modifica: new Date(),
+          },
+        },
+      );
     }
+
     return res
       .status(200)
       .json(buildResponse({ data: especie, mensaje: 'Especie actualizada correctamente' }));
