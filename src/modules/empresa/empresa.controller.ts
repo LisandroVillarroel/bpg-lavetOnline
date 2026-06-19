@@ -1,4 +1,9 @@
 import { Request, Response } from 'express';
+import Categoria from '../categoria/categoria.model';
+import Examen from '../examen/examen.model';
+import Especie from '../especie/especie.model';
+import Raza from '../raza/raza.model';
+import { UserModel } from '../user/user.model';
 import Empresa from './empresa.model';
 
 type ApiResponse<T> = {
@@ -32,6 +37,172 @@ const getValidationEmpresaMessage = (error: unknown): string | null => {
   const errors = (error as { errors?: Record<string, { message?: string }> }).errors;
   const firstError = errors ? Object.values(errors)[0] : undefined;
   return firstError?.message?.trim() || null;
+};
+
+const getAuthenticatedUserId = (req: Request): string =>
+  String(req.user?._id || req.user?.id || 'sistema');
+
+const rollbackClonedData = async (params: {
+  empresaId: string;
+  categoriaIds: string[];
+  examenIds: string[];
+  especieIds: string[];
+  razaIds: string[];
+}) => {
+  const { empresaId, categoriaIds, examenIds, especieIds, razaIds } = params;
+
+  await Promise.all([
+    examenIds.length ? Examen.deleteMany({ _id: { $in: examenIds } }) : Promise.resolve(),
+    categoriaIds.length ? Categoria.deleteMany({ _id: { $in: categoriaIds } }) : Promise.resolve(),
+    especieIds.length ? Especie.deleteMany({ _id: { $in: especieIds } }) : Promise.resolve(),
+    razaIds.length ? Raza.deleteMany({ _id: { $in: razaIds } }) : Promise.resolve(),
+    Empresa.findByIdAndDelete(empresaId),
+  ]);
+};
+
+const clonarDatosEmpresaOrigen = async (params: {
+  empresaOrigenId: string;
+  empresaDestinoId: string;
+  usuarioId: string;
+}) => {
+  const { empresaOrigenId, empresaDestinoId, usuarioId } = params;
+  const ahora = new Date();
+
+  const [categoriasOrigen, examenesOrigen, especiesOrigen, razasOrigen] = await Promise.all([
+    Categoria.find({ empresa_Id: empresaOrigenId, estado: 'Activo' }).lean(),
+    Examen.find({ empresa_Id: empresaOrigenId, estado: 'Activo' }).lean(),
+    Especie.find({ empresa_Id: empresaOrigenId, estado: 'Activo' }).lean(),
+    Raza.find({ empresa_Id: empresaOrigenId, estado: 'Activo' }).lean(),
+  ]);
+
+  const categoriaIds: string[] = [];
+  const examenIds: string[] = [];
+  const especieIds: string[] = [];
+  const razaIds: string[] = [];
+
+  try {
+    const categoriasCreadas = categoriasOrigen.length
+      ? await Categoria.insertMany(
+          categoriasOrigen.map(
+            ({
+              _id,
+              usuarioCrea_id,
+              usuarioModifica_id,
+              fechaHora_Crea,
+              fechaHora_Modifica,
+              ...categoria
+            }) => ({
+              ...categoria,
+              empresa_Id: empresaDestinoId,
+              usuarioCrea_id: usuarioId,
+              usuarioModifica_id: usuarioId,
+              fechaHora_Crea: ahora,
+              fechaHora_Modifica: ahora,
+            }),
+          ),
+        )
+      : [];
+
+    categoriaIds.push(...categoriasCreadas.map((categoria) => String(categoria._id)));
+
+    const categoriaMap = new Map(
+      categoriasOrigen.map((categoria, index) => [
+        String(categoria._id),
+        String(categoriasCreadas[index]?._id ?? ''),
+      ]),
+    );
+
+    const examenesCreados = examenesOrigen.length
+      ? await Examen.insertMany(
+          examenesOrigen
+            .map(
+              ({
+                _id,
+                usuarioCrea_id,
+                usuarioModifica_id,
+                fechaHora_Crea,
+                fechaHora_Modifica,
+                ...examen
+              }) => {
+                const categoriaDestinoId = categoriaMap.get(String(examen.categoria));
+                if (!categoriaDestinoId) {
+                  return null;
+                }
+
+                return {
+                  ...examen,
+                  categoria: categoriaDestinoId,
+                  empresa_Id: empresaDestinoId,
+                  usuarioCrea_id: usuarioId,
+                  usuarioModifica_id: usuarioId,
+                  fechaHora_Crea: ahora,
+                  fechaHora_Modifica: ahora,
+                };
+              },
+            )
+            .filter((examen): examen is NonNullable<typeof examen> => examen !== null),
+        )
+      : [];
+
+    examenIds.push(...examenesCreados.map((examen) => String(examen._id)));
+
+    const especiesCreadas = especiesOrigen.length
+      ? await Especie.insertMany(
+          especiesOrigen.map(
+            ({
+              _id,
+              usuarioCrea_id,
+              usuarioModifica_id,
+              fechaHora_Crea,
+              fechaHora_Modifica,
+              ...especie
+            }) => ({
+              ...especie,
+              empresa_Id: empresaDestinoId,
+              usuarioCrea_id: usuarioId,
+              usuarioModifica_id: usuarioId,
+              fechaHora_Crea: ahora,
+              fechaHora_Modifica: ahora,
+            }),
+          ),
+        )
+      : [];
+
+    especieIds.push(...especiesCreadas.map((especie) => String(especie._id)));
+
+    const razasCreadas = razasOrigen.length
+      ? await Raza.insertMany(
+          razasOrigen.map(
+            ({
+              _id,
+              usuarioCrea_id,
+              usuarioModifica_id,
+              fechaHora_Crea,
+              fechaHora_Modifica,
+              ...raza
+            }) => ({
+              ...raza,
+              empresa_Id: empresaDestinoId,
+              usuarioCrea_id: usuarioId,
+              usuarioModifica_id: usuarioId,
+              fechaHora_Crea: ahora,
+              fechaHora_Modifica: ahora,
+            }),
+          ),
+        )
+      : [];
+
+    razaIds.push(...razasCreadas.map((raza) => String(raza._id)));
+  } catch (error) {
+    await rollbackClonedData({
+      empresaId: empresaDestinoId,
+      categoriaIds,
+      examenIds,
+      especieIds,
+      razaIds,
+    });
+    throw error;
+  }
 };
 
 // Consultar todas las empresas (solo activas)
@@ -75,14 +246,39 @@ export async function obtenerEmpresaPorId(req: Request, res: Response) {
 export async function agregarEmpresa(req: Request, res: Response) {
   try {
     const now = new Date();
+    const usuarioId = getAuthenticatedUserId(req);
+    const { copiarDatosOrigen, ...empresaPayload } = req.body as { copiarDatosOrigen?: boolean };
     const nuevaEmpresa = new Empresa({
-      ...req.body,
-      usuarioCrea: req.body.usuarioCrea || 'sistema',
+      ...empresaPayload,
+      usuarioCrea: usuarioId,
       fechaHora_crea: now,
-      usuarioModifica: req.body.usuarioCrea || 'sistema',
+      usuarioModifica: usuarioId,
       fechaHora_modifica: now,
     });
     await nuevaEmpresa.save();
+
+    if (copiarDatosOrigen) {
+      const usuarioLogueado = await UserModel.findById(usuarioId).lean();
+      const empresaOrigenId = usuarioLogueado?.empresa?.empresaId?.trim();
+
+      if (!empresaOrigenId) {
+        await Empresa.findByIdAndDelete(nuevaEmpresa._id);
+        return res.status(200).json(
+          buildResponse({
+            error: true,
+            codigo: 400,
+            mensaje: 'No se pudo determinar la empresa origen del usuario logueado',
+          }),
+        );
+      }
+
+      await clonarDatosEmpresaOrigen({
+        empresaOrigenId,
+        empresaDestinoId: String(nuevaEmpresa._id),
+        usuarioId,
+      });
+    }
+
     return res
       .status(201)
       .json(
