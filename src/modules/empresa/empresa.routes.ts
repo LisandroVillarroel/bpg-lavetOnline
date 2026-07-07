@@ -13,7 +13,7 @@ const router = Router();
 // CRUD principal
 router.post('/', agregarEmpresa);
 router.put('/modificar/:id', modificarEmpresa);
-router.put('/eliminar/:id', eliminarEmpresa); // Eliminación lógica (PUT)
+router.put('/eliminar/:id', eliminarEmpresa); // Eliminación en cascada (PUT)
 router.get('/consulta/:id', obtenerEmpresaPorId);
 router.get('/consultaTotal', obtenerEmpresas);
 

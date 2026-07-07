@@ -3,6 +3,8 @@ import Categoria from '../categoria/categoria.model';
 import Examen from '../examen/examen.model';
 import Especie from '../especie/especie.model';
 import Raza from '../raza/raza.model';
+import RolVeterinario from '../rol-veterinario/rol-veterinario.model';
+import TipoVeterinario from '../tipo-veterinario/tipo-veterinario.model';
 import { UserModel } from '../user/user.model';
 import Empresa from './empresa.model';
 
@@ -24,6 +26,14 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
 const getDuplicateEmpresaMessage = (keyPattern: Record<string, unknown> = {}): string => {
   if (keyPattern['rutEmpresa']) {
     return 'Ya existe una empresa registrada con ese RUT';
+  }
+
+  if (keyPattern['sigla']) {
+    return 'Existe un tipo o rol veterinario duplicado para la empresa origen';
+  }
+
+  if (keyPattern['idEmpresa'] || keyPattern['idEmpresa_1'] || keyPattern['sigla_1']) {
+    return 'Existe un tipo o rol veterinario duplicado para la empresa destino';
   }
 
   return 'Ya existe una empresa con esos datos';
@@ -48,14 +58,30 @@ const rollbackClonedData = async (params: {
   examenIds: string[];
   especieIds: string[];
   razaIds: string[];
+  rolVeterinarioIds: string[];
+  tipoVeterinarioIds: string[];
 }) => {
-  const { empresaId, categoriaIds, examenIds, especieIds, razaIds } = params;
+  const {
+    empresaId,
+    categoriaIds,
+    examenIds,
+    especieIds,
+    razaIds,
+    rolVeterinarioIds,
+    tipoVeterinarioIds,
+  } = params;
 
   await Promise.all([
     examenIds.length ? Examen.deleteMany({ _id: { $in: examenIds } }) : Promise.resolve(),
     categoriaIds.length ? Categoria.deleteMany({ _id: { $in: categoriaIds } }) : Promise.resolve(),
     especieIds.length ? Especie.deleteMany({ _id: { $in: especieIds } }) : Promise.resolve(),
     razaIds.length ? Raza.deleteMany({ _id: { $in: razaIds } }) : Promise.resolve(),
+    rolVeterinarioIds.length
+      ? RolVeterinario.deleteMany({ _id: { $in: rolVeterinarioIds } })
+      : Promise.resolve(),
+    tipoVeterinarioIds.length
+      ? TipoVeterinario.deleteMany({ _id: { $in: tipoVeterinarioIds } })
+      : Promise.resolve(),
     Empresa.findByIdAndDelete(empresaId),
   ]);
 };
@@ -68,17 +94,28 @@ const clonarDatosEmpresaOrigen = async (params: {
   const { empresaOrigenId, empresaDestinoId, usuarioId } = params;
   const ahora = new Date();
 
-  const [categoriasOrigen, examenesOrigen, especiesOrigen, razasOrigen] = await Promise.all([
+  const [
+    categoriasOrigen,
+    examenesOrigen,
+    especiesOrigen,
+    razasOrigen,
+    rolesVeterinarioOrigen,
+    tiposVeterinarioOrigen,
+  ] = await Promise.all([
     Categoria.find({ empresa_Id: empresaOrigenId, estado: 'Activo' }).lean(),
     Examen.find({ empresa_Id: empresaOrigenId, estado: 'Activo' }).lean(),
     Especie.find({ empresa_Id: empresaOrigenId, estado: 'Activo' }).lean(),
     Raza.find({ empresa_Id: empresaOrigenId, estado: 'Activo' }).lean(),
+    RolVeterinario.find({ idEmpresa: empresaOrigenId, estado: 'Activo' }).lean(),
+    TipoVeterinario.find({ idEmpresa: empresaOrigenId, estado: 'Activo' }).lean(),
   ]);
 
   const categoriaIds: string[] = [];
   const examenIds: string[] = [];
   const especieIds: string[] = [];
   const razaIds: string[] = [];
+  const rolVeterinarioIds: string[] = [];
+  const tipoVeterinarioIds: string[] = [];
 
   try {
     const categoriasCreadas = categoriasOrigen.length
@@ -193,6 +230,58 @@ const clonarDatosEmpresaOrigen = async (params: {
       : [];
 
     razaIds.push(...razasCreadas.map((raza) => String(raza._id)));
+
+    const rolesVeterinarioCreados = rolesVeterinarioOrigen.length
+      ? await RolVeterinario.insertMany(
+          rolesVeterinarioOrigen.map(
+            ({
+              _id,
+              usuarioCrea,
+              usuarioModifica,
+              fechaHora_crea,
+              fechaHora_modifica,
+              ...rolVeterinario
+            }) => ({
+              ...rolVeterinario,
+              idEmpresa: empresaDestinoId,
+              usuarioCrea: usuarioId,
+              usuarioModifica: usuarioId,
+              fechaHora_crea: ahora,
+              fechaHora_modifica: ahora,
+            }),
+          ),
+        )
+      : [];
+
+    rolVeterinarioIds.push(
+      ...rolesVeterinarioCreados.map((rolVeterinario) => String(rolVeterinario._id)),
+    );
+
+    const tiposVeterinarioCreados = tiposVeterinarioOrigen.length
+      ? await TipoVeterinario.insertMany(
+          tiposVeterinarioOrigen.map(
+            ({
+              _id,
+              usuarioCrea,
+              usuarioModifica,
+              fechaHora_crea,
+              fechaHora_modifica,
+              ...tipoVeterinario
+            }) => ({
+              ...tipoVeterinario,
+              idEmpresa: empresaDestinoId,
+              usuarioCrea: usuarioId,
+              usuarioModifica: usuarioId,
+              fechaHora_crea: ahora,
+              fechaHora_modifica: ahora,
+            }),
+          ),
+        )
+      : [];
+
+    tipoVeterinarioIds.push(
+      ...tiposVeterinarioCreados.map((tipoVeterinario) => String(tipoVeterinario._id)),
+    );
   } catch (error) {
     await rollbackClonedData({
       empresaId: empresaDestinoId,
@@ -200,9 +289,23 @@ const clonarDatosEmpresaOrigen = async (params: {
       examenIds,
       especieIds,
       razaIds,
+      rolVeterinarioIds,
+      tipoVeterinarioIds,
     });
     throw error;
   }
+};
+
+const eliminarDatosAsociadosEmpresa = async (empresaId: string) => {
+  await Promise.all([
+    Categoria.deleteMany({ empresa_Id: empresaId }),
+    Examen.deleteMany({ empresa_Id: empresaId }),
+    Especie.deleteMany({ empresa_Id: empresaId }),
+    Raza.deleteMany({ empresa_Id: empresaId }),
+    TipoVeterinario.deleteMany({ idEmpresa: empresaId }),
+    RolVeterinario.deleteMany({ idEmpresa: empresaId }),
+    UserModel.deleteMany({ 'empresa.empresaId': empresaId }),
+  ]);
 };
 
 // Consultar todas las empresas (solo activas)
@@ -356,7 +459,7 @@ export async function modificarEmpresa(req: Request, res: Response) {
   }
 }
 
-// Eliminar empresa (lógico)
+// Eliminar empresa y todos sus datos asociados
 export async function eliminarEmpresa(req: Request, res: Response) {
   try {
     const { id } = req.params;
@@ -365,17 +468,17 @@ export async function eliminarEmpresa(req: Request, res: Response) {
         .status(200)
         .json(buildResponse({ error: true, codigo: 400, mensaje: 'ID requerido' }));
     }
-    const usuarioModifica = req.user?._id || req.user?.id || 'sistema';
-    const empresaEliminada = await Empresa.findByIdAndUpdate(
-      id,
-      { estadoEmpresa: 'Bloqueado', usuarioModifica },
-      { new: true },
-    );
+
+    const empresaEliminada = await Empresa.findById(id);
     if (!empresaEliminada) {
       return res
         .status(200)
         .json(buildResponse({ error: true, codigo: 404, mensaje: 'Empresa no encontrada' }));
     }
+
+    await eliminarDatosAsociadosEmpresa(id);
+    await Empresa.findByIdAndDelete(id);
+
     return res
       .status(200)
       .json(buildResponse({ data: empresaEliminada, mensaje: 'Empresa eliminada correctamente' }));

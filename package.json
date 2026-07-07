@@ -11,7 +11,8 @@
     "format": "prettier --write \"src/**/*.{ts,json}\"",
     "import:razas:excel": "node scripts/import-razas-from-excel.js",
     "import:examenes:excel": "node scripts/import-examenes-from-excel.js",
-    "migrate:examens-objectids": "node scripts/migrate-examens-objectids.js"
+    "migrate:examens-objectids": "node scripts/migrate-examens-objectids.js",
+    "migrate:veterinary-indexes": "node scripts/migrate-veterinary-indexes.js"
   },
   "keywords": [],
   "author": "",

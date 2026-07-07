@@ -14,7 +14,7 @@ export interface ITipoVeterinario extends Document {
 const TipoVeterinarioSchema = new Schema<ITipoVeterinario>(
   {
     descripcion: { type: String, required: true },
-    sigla: { type: String, required: true, unique: true },
+    sigla: { type: String, required: true },
     idEmpresa: { type: String, required: true },
     usuarioCrea: { type: String },
     usuarioModifica: { type: String },
@@ -24,6 +24,8 @@ const TipoVeterinarioSchema = new Schema<ITipoVeterinario>(
   },
   { timestamps: false },
 );
+
+TipoVeterinarioSchema.index({ idEmpresa: 1, sigla: 1 }, { unique: true });
 
 TipoVeterinarioSchema.pre('findOneAndUpdate', function (next) {
   this.set({ fechaHora_modifica: new Date() });

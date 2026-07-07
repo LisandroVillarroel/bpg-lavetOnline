@@ -14,7 +14,7 @@ export interface IRolVeterinario extends Document {
 const RolVeterinarioSchema = new Schema<IRolVeterinario>(
   {
     descripcion: { type: String, required: true },
-    sigla: { type: String, required: true, unique: true },
+    sigla: { type: String, required: true },
     idEmpresa: { type: String, required: true },
     usuarioCrea: { type: String },
     usuarioModifica: { type: String },
@@ -24,6 +24,8 @@ const RolVeterinarioSchema = new Schema<IRolVeterinario>(
   },
   { timestamps: false },
 );
+
+RolVeterinarioSchema.index({ idEmpresa: 1, sigla: 1 }, { unique: true });
 
 RolVeterinarioSchema.pre('findOneAndUpdate', function (next) {
   this.set({ fechaHora_modifica: new Date() });
