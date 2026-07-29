@@ -18,6 +18,9 @@ import categoriaRoutes from './modules/categoria/categoria.routes';
 import examenRoutes from './modules/examen/examen.routes';
 import razaRoutes from './modules/raza/raza.routes';
 import clienteRoutes from './modules/administracion/cliente/cliente.routes';
+import mascotaRoutes from './modules/mascota/mascota.routes';
+import atencionRoutes from './modules/atencion/atencion.routes';
+import propietarioRoutes from './modules/propietario/propietario.routes';
 
 const app = express();
 app.use(
@@ -73,6 +76,9 @@ app.use('/api/usuario', authenticateToken, usuarioRoutes);
 // Rutas de cliente
 app.use('/api/cliente', authenticateToken, clienteRoutes);
 
+// Rutas de propietario
+app.use('/api/propietario', authenticateToken, propietarioRoutes);
+
 // Rutas de empresa
 app.use('/api/empresa', authenticateToken, empresaRoutes);
 
@@ -96,6 +102,12 @@ app.use('/api/examen', authenticateToken, examenRoutes);
 
 // Rutas de raza
 app.use('/api/raza', authenticateToken, razaRoutes);
+
+// Rutas de mascota
+app.use('/api/mascota', authenticateToken, mascotaRoutes);
+
+// Rutas de atención
+app.use('/api/atencion', authenticateToken, atencionRoutes);
 
 const startServer = async () => {
   await connectMongo();
