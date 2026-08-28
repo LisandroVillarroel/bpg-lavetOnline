@@ -9,10 +9,16 @@
     "start": "node dist/server.js",
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.{ts,json}\"",
+    "menu:veterinaria:atencion": "mongosh --file scripts/update-menu-veterinaria-mantenedores-atencion.mongosh.js",
+    "menu:empresa:veterinaria:atencion": "mongosh --file scripts/update-empresa-menu-veterinaria-mantenedores-atencion.mongosh.js",
+    "menu:empresas:veterinaria:atencion:all": "mongosh --file scripts/update-empresas-veterinaria-mantenedores-atencion-all.mongosh.js",
+    "seed:tipos-atencion:veterinaria": "mongosh --file scripts/import-tipos-atencion-default-veterinaria.mongosh.js",
+    "seed:catalogo-clinico:veterinaria": "mongosh --file scripts/seed-catalogo-clinico-default-veterinaria.mongosh.js",
     "import:razas:excel": "node scripts/import-razas-from-excel.js",
     "import:examenes:excel": "node scripts/import-examenes-from-excel.js",
     "migrate:examens-objectids": "node scripts/migrate-examens-objectids.js",
-    "migrate:veterinary-indexes": "node scripts/migrate-veterinary-indexes.js"
+    "migrate:veterinary-indexes": "node scripts/migrate-veterinary-indexes.js",
+    "migrate:atencion-ficha-indexes": "node scripts/migrate-atencion-ficha-indexes.js"
   },
   "keywords": [],
   "author": "",

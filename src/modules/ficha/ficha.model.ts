@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 
-const MascotaSchema = new Schema({
+const FichaSchema = new Schema({
   propietario_Id: { type: Schema.Types.ObjectId, ref: 'usuarios', required: true },
   empresa_Id: { type: Schema.Types.ObjectId, ref: 'Empresa', required: true },
   nombre: { type: String, required: true },
@@ -18,4 +18,7 @@ const MascotaSchema = new Schema({
   fechaHora_Modifica: { type: Date },
 });
 
-export default model('Mascota', MascotaSchema);
+FichaSchema.index({ empresa_Id: 1, estado: 1, nombre: 1 });
+FichaSchema.index({ propietario_Id: 1, estado: 1, nombre: 1 });
+
+export default model('Ficha', FichaSchema);

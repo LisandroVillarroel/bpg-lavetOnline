@@ -16,11 +16,18 @@ import regionComunaRoutes from './modules/region-comuna/region-comuna.routes';
 import especieRoutes from './modules/especie/especie.routes';
 import categoriaRoutes from './modules/categoria/categoria.routes';
 import examenRoutes from './modules/examen/examen.routes';
+import procedimientoRoutes from './modules/procedimiento/procedimiento.routes';
+import medicamentoRoutes from './modules/medicamento/medicamento.routes';
+import tipoCobroRoutes from './modules/tipo-cobro/tipo-cobro.routes';
+import tipoAtencionRoutes from './modules/tipo-atencion/tipo-atencion.routes';
+import catalogoClinicoRoutes from './modules/catalogo-clinico/catalogo-clinico.routes';
 import razaRoutes from './modules/raza/raza.routes';
 import clienteRoutes from './modules/administracion/cliente/cliente.routes';
-import mascotaRoutes from './modules/mascota/mascota.routes';
+import fichaRoutes from './modules/ficha/ficha.routes';
 import atencionRoutes from './modules/atencion/atencion.routes';
+import hospitalizacionRoutes from './modules/hospitalizacion/hospitalizacion.routes';
 import propietarioRoutes from './modules/propietario/propietario.routes';
+import inventarioRoutes from './modules/inventario/inventario.routes';
 
 const app = express();
 app.use(
@@ -100,14 +107,35 @@ app.use('/api/categoria', authenticateToken, categoriaRoutes);
 // Rutas de examen
 app.use('/api/examen', authenticateToken, examenRoutes);
 
+// Rutas de procedimiento
+app.use('/api/procedimiento', authenticateToken, procedimientoRoutes);
+
+// Rutas de medicamento
+app.use('/api/medicamento', authenticateToken, medicamentoRoutes);
+
+// Rutas de tipo de cobro
+app.use('/api/tipo-cobro', authenticateToken, tipoCobroRoutes);
+
+// Rutas de tipo de atención
+app.use('/api/tipo-atencion', authenticateToken, tipoAtencionRoutes);
+
+// Catálogos clínicos parametrizables (motivos y diagnósticos)
+app.use('/api/catalogo-clinico', authenticateToken, catalogoClinicoRoutes);
+
 // Rutas de raza
 app.use('/api/raza', authenticateToken, razaRoutes);
 
-// Rutas de mascota
-app.use('/api/mascota', authenticateToken, mascotaRoutes);
+// Rutas de ficha
+app.use('/api/ficha', authenticateToken, fichaRoutes);
 
 // Rutas de atención
 app.use('/api/atencion', authenticateToken, atencionRoutes);
+
+// Hospitalizaciones y evoluciones clínicas asociadas a una atención.
+app.use('/api/hospitalizacion', authenticateToken, hospitalizacionRoutes);
+
+// Stock y movimientos de insumos veterinarios.
+app.use('/api/inventario', authenticateToken, inventarioRoutes);
 
 const startServer = async () => {
   await connectMongo();

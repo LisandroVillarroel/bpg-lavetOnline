@@ -1,0 +1,108 @@
+{
+  "info": {
+    "_postman_id": "f8b1b3f4-2d47-4cf6-a2ce-ec292cfa0f2d",
+    "name": "Lavet Despliegue Tipo Atencion",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Checklist operativo para habilitar Tipo de Atencion: actualizar menu Veterinaria, actualizar menu de empresa y validar catalogo/atenciones."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "menuIdVeterinaria", "value": "" },
+    { "key": "empresaId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Obtener menu Veterinaria",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/menu/id/{{menuIdVeterinaria}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "menu", "id", "{{menuIdVeterinaria}}"]
+        },
+        "description": "Verifica si existen los items procedimiento, medicamento, tipo-cobro y tipo-atencion dentro de mantenedores."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Actualizar items menu Veterinaria",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"menuItem\": [\n    {\n      \"despliegaNombre\": \"Portada\",\n      \"iconoNombre\": \"dashboard\",\n      \"route\": \"portada\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"despliegaNombre\": \"Fichas\",\n      \"iconoNombre\": \"folder_open\",\n      \"route\": \"fichas\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"despliegaNombre\": \"Mantenedores\",\n      \"iconoNombre\": \"format_list_bulleted\",\n      \"route\": \"mantenedores\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": [\n        {\n          \"despliegaNombre\": \"Procedimientos\",\n          \"iconoNombre\": \"healing\",\n          \"route\": \"procedimiento\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"despliegaNombre\": \"Medicamentos\",\n          \"iconoNombre\": \"medication\",\n          \"route\": \"medicamento\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"despliegaNombre\": \"Tipos de Cobro\",\n          \"iconoNombre\": \"payments\",\n          \"route\": \"tipo-cobro\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"despliegaNombre\": \"Tipos de Atencion\",\n          \"iconoNombre\": \"medical_services\",\n          \"route\": \"tipo-atencion\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/menu/{{menuIdVeterinaria}}/items",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "menu", "{{menuIdVeterinaria}}", "items"]
+        },
+        "description": "Actualiza el arbol menuItem del menu Veterinaria con los mantenedores clinicos/comerciales requeridos."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Actualizar menu de empresa",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"MenuItem\": [\n    {\n      \"despliegaNombre\": \"Portada\",\n      \"iconoNombre\": \"dashboard\",\n      \"route\": \"portada\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"despliegaNombre\": \"Fichas\",\n      \"iconoNombre\": \"folder_open\",\n      \"route\": \"fichas\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": []\n    },\n    {\n      \"despliegaNombre\": \"Mantenedores\",\n      \"iconoNombre\": \"format_list_bulleted\",\n      \"route\": \"mantenedores\",\n      \"tipoPermiso\": \"\",\n      \"indeterminate\": false,\n      \"seleccionado\": false,\n      \"children\": [\n        {\n          \"despliegaNombre\": \"Procedimientos\",\n          \"iconoNombre\": \"healing\",\n          \"route\": \"procedimiento\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"despliegaNombre\": \"Medicamentos\",\n          \"iconoNombre\": \"medication\",\n          \"route\": \"medicamento\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"despliegaNombre\": \"Tipos de Cobro\",\n          \"iconoNombre\": \"payments\",\n          \"route\": \"tipo-cobro\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        },\n        {\n          \"despliegaNombre\": \"Tipos de Atencion\",\n          \"iconoNombre\": \"medical_services\",\n          \"route\": \"tipo-atencion\",\n          \"tipoPermiso\": \"\",\n          \"indeterminate\": false,\n          \"seleccionado\": false,\n          \"children\": []\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/empresa/modificar-menu/{{empresaId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "empresa", "modificar-menu", "{{empresaId}}"]
+        },
+        "description": "Sincroniza MenuItem a nivel empresa para que el usuario vea la opcion en sidenav tras relogin."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Listar tipos de atencion por empresa",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/tipo-atencion?empresa_Id={{empresaId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "tipo-atencion"],
+          "query": [{ "key": "empresa_Id", "value": "{{empresaId}}" }]
+        },
+        "description": "Verifica que el catalogo Tipo de Atencion tenga registros activos para el formulario de atenciones."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Crear tipo de atencion",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Control Preventivo\",\n  \"descripcion\": \"Seguimiento de rutina\",\n  \"empresa_Id\": \"{{empresaId}}\",\n  \"usuarioCrea_id\": \"REEMPLAZAR_USUARIO_ID\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tipo-atencion",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "tipo-atencion"]
+        },
+        "description": "Alta manual rapida para validar que el mantenedor y el formulario de atenciones consumen el mismo catalogo."
+      },
+      "response": []
+    }
+  ]
+}
