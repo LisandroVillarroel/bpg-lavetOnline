@@ -21,6 +21,7 @@ import medicamentoRoutes from './modules/medicamento/medicamento.routes';
 import tipoCobroRoutes from './modules/tipo-cobro/tipo-cobro.routes';
 import tipoAtencionRoutes from './modules/tipo-atencion/tipo-atencion.routes';
 import catalogoClinicoRoutes from './modules/catalogo-clinico/catalogo-clinico.routes';
+import tipoCatalogoClinicoRoutes from './modules/tipo-catalogo-clinico/tipo-catalogo-clinico.routes';
 import razaRoutes from './modules/raza/raza.routes';
 import clienteRoutes from './modules/administracion/cliente/cliente.routes';
 import fichaRoutes from './modules/ficha/ficha.routes';
@@ -121,6 +122,9 @@ app.use('/api/tipo-atencion', authenticateToken, tipoAtencionRoutes);
 
 // Catálogos clínicos parametrizables (motivos y diagnósticos)
 app.use('/api/catalogo-clinico', authenticateToken, catalogoClinicoRoutes);
+
+// Tipos parametrizables del catálogo clínico.
+app.use('/api/tipo-catalogo-clinico', authenticateToken, tipoCatalogoClinicoRoutes);
 
 // Rutas de raza
 app.use('/api/raza', authenticateToken, razaRoutes);

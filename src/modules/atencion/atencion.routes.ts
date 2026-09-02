@@ -6,6 +6,7 @@ const router = Router();
 router.get('/empresa/:empresaId', atencionCtrl.obtenerAtencionesPorEmpresa);
 router.get('/ficha/:fichaId', atencionCtrl.obtenerAtencionesPorFicha);
 router.get('/vacunas/proximas', atencionCtrl.obtenerVacunasProximas);
+router.put('/vacunas/:atencionId/:indice/notificar', atencionCtrl.marcarVacunaNotificada);
 router.get('/reporteria/resumen', atencionCtrl.obtenerResumenReporteria);
 router.get('/:id', atencionCtrl.obtenerAtencionPorId);
 router.post('/', atencionCtrl.crearAtencion);

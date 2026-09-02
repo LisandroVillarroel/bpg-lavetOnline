@@ -5,6 +5,7 @@ import CatalogoClinico from '../catalogo-clinico/catalogo-clinico.model';
 import { getVeterinaryAccess, isAllowedCompany } from '../../core/utils/veterinary-access';
 import InventarioInsumo from './inventario-insumo.model';
 import MovimientoInventario from './movimiento-inventario.model';
+import TipoCatalogoClinico from '../tipo-catalogo-clinico/tipo-catalogo-clinico.model';
 
 const response = <T>(data: T | null, mensaje: string, error = false, codigo = 200) => ({
   error,
@@ -33,10 +34,17 @@ export async function crear(req: Request, res: Response) {
   const empresaId = String(req.body?.empresa_Id ?? '');
   const access = await accessCompany(req, empresaId);
   const insumoId = String(req.body?.insumo_Id ?? '');
+  const tipoInsumo = await TipoCatalogoClinico.findOne({
+    codigo: 'INSUMO',
+    empresa_Id: empresaId,
+    estado: 'Activo',
+  })
+    .select('_id')
+    .lean();
   const insumo = await CatalogoClinico.findOne({
     _id: insumoId,
     empresa_Id: empresaId,
-    tipo: 'INSUMO',
+    tipoCatalogoClinico_Id: tipoInsumo?._id,
     estado: 'Activo',
   }).lean();
   if (!access || !insumo)
@@ -73,29 +81,41 @@ export async function mover(req: Request, res: Response) {
     return res.status(200).json(response(null, 'Movimiento inválido', true, 400));
   }
 
+  const tipoInsumo = await TipoCatalogoClinico.findOne({
+    codigo: 'INSUMO',
+    empresa_Id: empresaId,
+    estado: 'Activo',
+  })
+    .select('_id')
+    .lean();
   const insumo = await CatalogoClinico.findOne({
     _id: insumoId,
     empresa_Id: empresaId,
-    tipo: 'INSUMO',
+    tipoCatalogoClinico_Id: tipoInsumo?._id,
     estado: 'Activo',
   }).lean();
-  const inventario = await InventarioInsumo.findOne({
+  const filtroInventario = {
     empresa_Id: empresaId,
     insumo_Id: insumoId,
     estado: 'Activo',
-  });
+    ...(tipo === 'Salida' ? { stock: { $gte: cantidad } } : {}),
+  };
+  const inventario = await InventarioInsumo.findOneAndUpdate(
+    filtroInventario,
+    {
+      $inc: { stock: tipo === 'Entrada' ? cantidad : -cantidad },
+      $set: {
+        usuarioModifica_id: new Types.ObjectId(access.userId),
+        fechaHora_Modifica: new Date(),
+      },
+    },
+    { new: false },
+  );
   if (!insumo || !inventario)
     return res.status(200).json(response(null, 'Insumo sin inventario', true, 404));
 
   const stockAnterior = inventario.stock;
   const stockPosterior = tipo === 'Entrada' ? stockAnterior + cantidad : stockAnterior - cantidad;
-  if (stockPosterior < 0)
-    return res.status(200).json(response(null, 'Stock insuficiente', true, 409));
-
-  inventario.stock = stockPosterior;
-  inventario.usuarioModifica_id = new Types.ObjectId(access.userId);
-  inventario.fechaHora_Modifica = new Date();
-  await inventario.save();
   const movimiento = await MovimientoInventario.create({
     ...req.body,
     inventarioInsumo_Id: inventario._id,

@@ -5,6 +5,7 @@ export interface IMenuItem {
   iconoNombre: string;
   route?: string;
   tipoPermiso?: string;
+  orden?: number;
   indeterminate?: boolean;
   seleccionado?: boolean;
   children?: IMenuItem[];
@@ -27,6 +28,7 @@ const MenuItemSchema = new Schema<IMenuItem>(
     iconoNombre: { type: String, required: true },
     route: { type: String },
     tipoPermiso: { type: String },
+    orden: { type: Number, default: 0 },
     indeterminate: { type: Boolean, default: false },
     seleccionado: { type: Boolean, default: false },
     children: [{ type: Schema.Types.Mixed }], // placeholder, se redefine abajo

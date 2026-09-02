@@ -5,6 +5,11 @@ const itemsRequeridos = [
   { despliegaNombre: 'Medicamentos', iconoNombre: 'medication', route: 'medicamento' },
   { despliegaNombre: 'Tipos de Cobro', iconoNombre: 'payments', route: 'tipo-cobro' },
   { despliegaNombre: 'Tipos de Atencion', iconoNombre: 'medical_services', route: 'tipo-atencion' },
+  {
+    despliegaNombre: 'Tipos de Catálogo Clínico',
+    iconoNombre: 'category',
+    route: 'tipos-catalogo-clinico',
+  },
   { despliegaNombre: 'Catálogo Clínico', iconoNombre: 'library_books', route: 'catalogo-clinico' },
   {
     despliegaNombre: 'Hospitalizaciones',

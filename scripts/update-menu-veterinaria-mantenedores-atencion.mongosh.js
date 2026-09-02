@@ -8,6 +8,11 @@ const itemsRequeridos = [
   { despliegaNombre: 'Tipos de Atención', iconoNombre: 'medical_services', route: 'tipo-atencion' },
   { despliegaNombre: 'Catálogo Clínico', iconoNombre: 'library_books', route: 'catalogo-clinico' },
   {
+    despliegaNombre: 'Tipos de Catálogo Clínico',
+    iconoNombre: 'category',
+    route: 'tipos-catalogo-clinico',
+  },
+  {
     despliegaNombre: 'Hospitalizaciones',
     iconoNombre: 'local_hospital',
     route: '../veterinaria/hospitalizaciones',

@@ -1,16 +1,10 @@
 import { Request, Response } from 'express';
 
 import { UserModel } from '../user/user.model';
+import TipoCatalogoClinico from '../tipo-catalogo-clinico/tipo-catalogo-clinico.model';
 import CatalogoClinico from './catalogo-clinico.model';
 
-type CatalogoTipo = 'MOTIVO_CONSULTA' | 'DIAGNOSTICO' | 'VACUNA' | 'INSUMO';
-
-type ApiResponse<T> = {
-  error: boolean;
-  data: T | null;
-  codigo: number;
-  mensaje: string;
-};
+type ApiResponse<T> = { error: boolean; data: T | null; codigo: number; mensaje: string };
 
 const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> => ({
   error: false,
@@ -20,53 +14,37 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
   ...overrides,
 });
 
-const getTipo = (value: unknown): CatalogoTipo | null =>
-  value === 'MOTIVO_CONSULTA' || value === 'DIAGNOSTICO' || value === 'VACUNA' || value === 'INSUMO'
-    ? value
-    : null;
-
 async function getEmpresaScope(req: Request): Promise<string | null> {
   const userId = req.user?._id || req.user?.id;
-  if (!userId) {
-    return null;
-  }
-
+  if (!userId) return null;
   const usuario = await UserModel.findById(userId).select('tipoUsuario veterinaria empresa').lean();
-  const esAdministrador =
-    usuario?.tipoUsuario === 'Administración' ||
-    usuario?.veterinaria?.rolVeterinario?.toLowerCase().includes('administrador');
+  if (!usuario) return null;
+  const rol = usuario.veterinaria?.rolVeterinario?.toLowerCase() ?? '';
+  const esAdministrador = usuario.tipoUsuario === 'Administración' || rol.includes('administrador');
+  return esAdministrador ? '' : usuario.empresa?.empresaId || null;
+}
 
-  if (esAdministrador) {
-    return '';
-  }
-
-  return usuario?.empresa?.empresaId || null;
+function companyFilter(scope: string, requestedCompany: unknown) {
+  return { empresa_Id: scope || String(requestedCompany ?? '') };
 }
 
 export async function getAll(req: Request, res: Response) {
   try {
-    const empresaScope = await getEmpresaScope(req);
-    if (empresaScope === null) {
+    const scope = await getEmpresaScope(req);
+    if (scope === null)
       return res
         .status(200)
         .json(buildResponse({ error: true, codigo: 403, mensaje: 'Empresa no autorizada' }));
+    const filter: Record<string, unknown> = {
+      estado: 'Activo',
+      ...companyFilter(scope, req.query.empresa_Id),
+    };
+    if (typeof req.query.tipoCatalogoClinico_Id === 'string' && req.query.tipoCatalogoClinico_Id) {
+      filter.tipoCatalogoClinico_Id = req.query.tipoCatalogoClinico_Id;
     }
-
-    const { empresa_Id, tipo } = req.query;
-    const filter: Record<string, unknown> = { estado: 'Activo' };
-
-    if (empresaScope) {
-      filter.empresa_Id = empresaScope;
-    } else if (typeof empresa_Id === 'string' && empresa_Id) {
-      filter.empresa_Id = empresa_Id;
-    }
-
-    const tipoCatalogo = getTipo(tipo);
-    if (tipoCatalogo) {
-      filter.tipo = tipoCatalogo;
-    }
-
-    const registros = await CatalogoClinico.find(filter).sort({ nombre: 1 });
+    const registros = await CatalogoClinico.find(filter)
+      .populate('tipoCatalogoClinico_Id', 'codigo nombre')
+      .sort({ nombre: 1 });
     return res
       .status(200)
       .json(buildResponse({ data: registros, mensaje: 'Catálogo clínico obtenido correctamente' }));
@@ -81,18 +59,20 @@ export async function getAll(req: Request, res: Response) {
 
 export async function getById(req: Request, res: Response) {
   try {
-    const empresaScope = await getEmpresaScope(req);
-    const filtro =
-      empresaScope === null
-        ? null
-        : { _id: req.params.id, ...(empresaScope ? { empresa_Id: empresaScope } : {}) };
-    const registro = filtro ? await CatalogoClinico.findOne(filtro) : null;
-    if (!registro || registro.estado === 'Borrado') {
+    const scope = await getEmpresaScope(req);
+    if (scope === null)
+      return res
+        .status(200)
+        .json(buildResponse({ error: true, codigo: 403, mensaje: 'Empresa no autorizada' }));
+    const registro = await CatalogoClinico.findOne({
+      _id: req.params.id,
+      ...companyFilter(scope, req.query.empresa_Id),
+      estado: 'Activo',
+    }).populate('tipoCatalogoClinico_Id', 'codigo nombre');
+    if (!registro)
       return res
         .status(200)
         .json(buildResponse({ error: true, codigo: 404, mensaje: 'Registro no encontrado' }));
-    }
-
     return res.status(200).json(buildResponse({ data: registro, mensaje: 'Registro encontrado' }));
   } catch {
     return res
@@ -103,11 +83,19 @@ export async function getById(req: Request, res: Response) {
 
 export async function create(req: Request, res: Response) {
   try {
-    const empresaScope = await getEmpresaScope(req);
-    const empresaId =
-      empresaScope === null ? '' : empresaScope || String(req.body?.empresa_Id || '').trim();
-    const tipo = getTipo(req.body?.tipo);
-    if (!empresaId || !tipo || !req.body?.codigo || !req.body?.nombre) {
+    const scope = await getEmpresaScope(req);
+    const empresaId = scope || String(req.body?.empresa_Id ?? '').trim();
+    const tipoId = String(req.body?.tipoCatalogoClinico_Id ?? '').trim();
+    const tipo = await TipoCatalogoClinico.findOne({
+      _id: tipoId,
+      empresa_Id: empresaId,
+      estado: 'Activo',
+    }).lean();
+    const codigo = String(req.body?.codigo ?? '')
+      .trim()
+      .toUpperCase();
+    const nombre = String(req.body?.nombre ?? '').trim();
+    if (scope === null || !empresaId || !tipo || !codigo || !nombre)
       return res.status(200).json(
         buildResponse({
           error: true,
@@ -115,70 +103,72 @@ export async function create(req: Request, res: Response) {
           mensaje: 'Tipo, empresa, código y nombre son requeridos',
         }),
       );
-    }
-
-    const registro = new CatalogoClinico({
+    const registro = await CatalogoClinico.create({
       ...req.body,
-      tipo,
       empresa_Id: empresaId,
-      codigo: String(req.body.codigo).trim().toUpperCase(),
-      nombre: String(req.body.nombre).trim(),
+      tipoCatalogoClinico_Id: tipo._id,
+      codigo,
+      nombre,
       estado: 'Activo',
-      fechaHora_Crea: new Date(),
+      usuarioCrea_id: req.user?._id || req.user?.id,
     });
-    await registro.save();
-
     return res
-      .status(200)
-      .json(buildResponse({ data: registro, mensaje: 'Registro creado correctamente' }));
-  } catch {
-    return res
-      .status(200)
-      .json(buildResponse({ error: true, codigo: 500, mensaje: 'Error al crear registro' }));
+      .status(201)
+      .json(
+        buildResponse({ data: registro, codigo: 201, mensaje: 'Registro creado correctamente' }),
+      );
+  } catch (error) {
+    const duplicate =
+      typeof error === 'object' && error !== null && 'code' in error && error.code === 11000;
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        codigo: duplicate ? 409 : 500,
+        mensaje: duplicate ? 'El código ya existe para este tipo' : 'Error al crear registro',
+      }),
+    );
   }
 }
 
 export async function update(req: Request, res: Response) {
   try {
-    const empresaScope = await getEmpresaScope(req);
-    if (empresaScope === null) {
+    const scope = await getEmpresaScope(req);
+    if (scope === null)
       return res
         .status(200)
         .json(buildResponse({ error: true, codigo: 403, mensaje: 'Empresa no autorizada' }));
-    }
-
+    const actual = await CatalogoClinico.findOne({
+      _id: req.params.id,
+      ...companyFilter(scope, req.body?.empresa_Id),
+    });
+    if (!actual)
+      return res
+        .status(200)
+        .json(buildResponse({ error: true, codigo: 404, mensaje: 'Registro no encontrado' }));
     const data = { ...req.body };
-    if (data.tipo) {
-      const tipo = getTipo(data.tipo);
-      if (!tipo) {
+    delete data.empresa_Id;
+    if (data.tipoCatalogoClinico_Id) {
+      const tipo = await TipoCatalogoClinico.findOne({
+        _id: data.tipoCatalogoClinico_Id,
+        empresa_Id: actual.empresa_Id,
+        estado: 'Activo',
+      }).lean();
+      if (!tipo)
         return res
           .status(200)
           .json(buildResponse({ error: true, codigo: 400, mensaje: 'Tipo de catálogo no válido' }));
-      }
-      data.tipo = tipo;
     }
-    if (data.codigo) {
-      data.codigo = String(data.codigo).trim().toUpperCase();
-    }
-    if (data.nombre) {
-      data.nombre = String(data.nombre).trim();
-    }
-
-    const registro = await CatalogoClinico.findOneAndUpdate(
-      { _id: req.params.id, ...(empresaScope ? { empresa_Id: empresaScope } : {}) },
+    if (data.codigo) data.codigo = String(data.codigo).trim().toUpperCase();
+    if (data.nombre) data.nombre = String(data.nombre).trim();
+    const registro = await CatalogoClinico.findByIdAndUpdate(
+      req.params.id,
       {
         ...data,
         usuarioModifica_id: req.user?._id || req.user?.id,
         fechaHora_Modifica: new Date(),
       },
       { new: true },
-    );
-    if (!registro) {
-      return res
-        .status(200)
-        .json(buildResponse({ error: true, codigo: 404, mensaje: 'Registro no encontrado' }));
-    }
-
+    ).populate('tipoCatalogoClinico_Id', 'codigo nombre');
     return res
       .status(200)
       .json(buildResponse({ data: registro, mensaje: 'Registro actualizado correctamente' }));
@@ -191,15 +181,13 @@ export async function update(req: Request, res: Response) {
 
 export async function remove(req: Request, res: Response) {
   try {
-    const empresaScope = await getEmpresaScope(req);
-    if (empresaScope === null) {
+    const scope = await getEmpresaScope(req);
+    if (scope === null)
       return res
         .status(200)
         .json(buildResponse({ error: true, codigo: 403, mensaje: 'Empresa no autorizada' }));
-    }
-
     const registro = await CatalogoClinico.findOneAndUpdate(
-      { _id: req.params.id, ...(empresaScope ? { empresa_Id: empresaScope } : {}) },
+      { _id: req.params.id, ...companyFilter(scope, req.body?.empresa_Id), estado: 'Activo' },
       {
         estado: 'Borrado',
         usuarioModifica_id: req.user?._id || req.user?.id,
@@ -207,12 +195,10 @@ export async function remove(req: Request, res: Response) {
       },
       { new: true },
     );
-    if (!registro) {
+    if (!registro)
       return res
         .status(200)
         .json(buildResponse({ error: true, codigo: 404, mensaje: 'Registro no encontrado' }));
-    }
-
     return res
       .status(200)
       .json(buildResponse({ data: registro, mensaje: 'Registro eliminado correctamente' }));

@@ -14,6 +14,8 @@
     "menu:empresas:veterinaria:atencion:all": "mongosh --file scripts/update-empresas-veterinaria-mantenedores-atencion-all.mongosh.js",
     "seed:tipos-atencion:veterinaria": "mongosh --file scripts/import-tipos-atencion-default-veterinaria.mongosh.js",
     "seed:catalogo-clinico:veterinaria": "mongosh --file scripts/seed-catalogo-clinico-default-veterinaria.mongosh.js",
+    "seed:tipos-catalogo-clinico:veterinaria": "mongosh --file scripts/seed-tipos-catalogo-clinico-veterinaria.mongosh.js",
+    "migrate:catalogo-clinico-tipos": "mongosh --file scripts/migrate-catalogo-clinico-tipos.mongosh.js",
     "import:razas:excel": "node scripts/import-razas-from-excel.js",
     "import:examenes:excel": "node scripts/import-examenes-from-excel.js",
     "migrate:examens-objectids": "node scripts/migrate-examens-objectids.js",

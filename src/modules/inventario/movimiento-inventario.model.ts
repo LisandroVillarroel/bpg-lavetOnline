@@ -4,6 +4,8 @@ const MovimientoInventarioSchema = new Schema({
   inventarioInsumo_Id: { type: Schema.Types.ObjectId, ref: 'InventarioInsumo', required: true },
   insumo_Id: { type: Schema.Types.ObjectId, ref: 'CatalogoClinico', required: true },
   empresa_Id: { type: Schema.Types.ObjectId, ref: 'Empresa', required: true },
+  atencion_Id: { type: Schema.Types.ObjectId, ref: 'Atencion' },
+  origen: { type: String, enum: ['MANUAL', 'ATENCION'], default: 'MANUAL' },
   tipo: { type: String, enum: ['Entrada', 'Salida'], required: true },
   cantidad: { type: Number, required: true, min: 0.01 },
   stockAnterior: { type: Number, required: true, min: 0 },

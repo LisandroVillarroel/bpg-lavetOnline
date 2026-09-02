@@ -7,7 +7,11 @@ import TipoCobro from '../tipo-cobro/tipo-cobro.model';
 import TipoAtencion from '../tipo-atencion/tipo-atencion.model';
 import { UserModel } from '../user/user.model';
 import Examen from '../examen/examen.model';
+import CatalogoClinico from '../catalogo-clinico/catalogo-clinico.model';
 import { getVeterinaryAccess, isAllowedCompany } from '../../core/utils/veterinary-access';
+import InventarioInsumo from '../inventario/inventario-insumo.model';
+import MovimientoInventario from '../inventario/movimiento-inventario.model';
+import { ClientSession, Types } from 'mongoose';
 
 const buildResponse = <T>(
   overrides?: Partial<{ error: boolean; data: T | null; codigo: number; mensaje: string }>,
@@ -108,6 +112,93 @@ const toPositiveOrDefault = (value: unknown, fallback = 1): number => {
 };
 
 const normalizeString = (value: unknown): string => String(value ?? '').trim();
+
+async function actualizarStockPorAtencion(
+  insumos: unknown,
+  empresaId: string,
+  atencionId: unknown,
+  usuarioId: string,
+  tipo: 'Entrada' | 'Salida',
+  session?: ClientSession,
+) {
+  if (!Array.isArray(insumos)) return;
+  const cantidades = new Map<string, number>();
+  for (const item of insumos as Array<Record<string, unknown>>) {
+    const insumoId = normalizeString(item.insumo_Id);
+    const cantidad = toPositiveOrDefault(item.cantidad, 1);
+    if (insumoId) cantidades.set(insumoId, (cantidades.get(insumoId) ?? 0) + cantidad);
+  }
+
+  for (const [insumoId, cantidad] of cantidades) {
+    const filtro = {
+      empresa_Id: empresaId,
+      insumo_Id: insumoId,
+      estado: 'Activo',
+      ...(tipo === 'Salida' ? { stock: { $gte: cantidad } } : {}),
+    };
+    const inventario = await InventarioInsumo.findOneAndUpdate(
+      filtro,
+      {
+        $inc: { stock: tipo === 'Salida' ? -cantidad : cantidad },
+        $set: {
+          usuarioModifica_id: new Types.ObjectId(usuarioId),
+          fechaHora_Modifica: new Date(),
+        },
+      },
+      { new: false, ...(session ? { session } : {}) },
+    );
+    if (!inventario)
+      throw new Error(
+        tipo === 'Salida'
+          ? `Stock insuficiente para ${insumoId}`
+          : `Insumo sin inventario ${insumoId}`,
+      );
+    const stockAnterior = inventario.stock;
+    const stockPosterior = tipo === 'Salida' ? stockAnterior - cantidad : stockAnterior + cantidad;
+    await MovimientoInventario.create(
+      [
+        {
+          inventarioInsumo_Id: inventario._id,
+          insumo_Id: insumoId,
+          empresa_Id: empresaId,
+          atencion_Id: atencionId,
+          origen: 'ATENCION',
+          tipo,
+          cantidad,
+          stockAnterior,
+          stockPosterior,
+          costoUnitario: inventario.costoUnitario,
+          usuarioCrea_id: usuarioId,
+        },
+      ],
+      session ? { session } : undefined,
+    );
+  }
+}
+
+async function construirCampoClinico(
+  id: unknown,
+  texto: unknown,
+  tipo: 'MOTIVO_CONSULTA' | 'DIAGNOSTICO',
+  empresaId: string,
+) {
+  const catalogoId = normalizeString(id);
+  const registro = catalogoId
+    ? await CatalogoClinico.findOne({
+        _id: catalogoId,
+        tipo,
+        empresa_Id: empresaId,
+        estado: 'Activo',
+      })
+        .select('_id nombre')
+        .lean()
+    : null;
+
+  return {
+    id: registro?._id ? String(registro._id) : undefined,
+    texto: normalizeString(registro?.nombre) || normalizeString(texto),
+  };
+}
 
 async function construirSnapshotClinico(fichaId: unknown, profesionalId: unknown) {
   const ficha = await Ficha.findById(fichaId)
@@ -589,6 +680,7 @@ export async function obtenerVacunasProximas(req: Request, res: Response) {
           ...vacuna,
           atencion_Id: atencion._id,
           ficha_Id: atencion.ficha_Id,
+          vacunaIndex: atencion.vacunas?.indexOf(vacuna),
           fichaNombre: atencion.snapshotClinico?.mascota?.nombre,
           propietarioNombre: atencion.snapshotClinico?.propietario?.nombre,
         })),
@@ -603,6 +695,47 @@ export async function obtenerVacunasProximas(req: Request, res: Response) {
       .json(
         buildResponse({ error: true, codigo: 500, mensaje: 'Error al obtener próximas vacunas' }),
       );
+  }
+}
+
+export async function marcarVacunaNotificada(req: Request, res: Response) {
+  try {
+    const access = await getVeterinaryAccess(req);
+    const indice = Number(req.params.indice);
+    const atencion = await Atencion.findById(req.params.atencionId);
+    if (
+      !access ||
+      !atencion ||
+      !Number.isInteger(indice) ||
+      indice < 0 ||
+      !isAllowedCompany(access, String(atencion.empresa_Id))
+    ) {
+      return res
+        .status(200)
+        .json(buildResponse({ error: true, codigo: 403, mensaje: 'Vacuna no autorizada' }));
+    }
+    const ficha = await Ficha.findById(atencion.ficha_Id).select('propietario_Id').lean();
+    if (access.esPropietario && String(ficha?.propietario_Id) !== access.userId) {
+      return res
+        .status(200)
+        .json(buildResponse({ error: true, codigo: 403, mensaje: 'Vacuna no autorizada' }));
+    }
+    const vacuna = atencion.vacunas?.[indice];
+    if (!vacuna)
+      return res
+        .status(200)
+        .json(buildResponse({ error: true, codigo: 404, mensaje: 'Vacuna no encontrada' }));
+    vacuna.notificoPropietario = true;
+    atencion.usuarioModifica_id = new Types.ObjectId(access.userId);
+    atencion.fechaHora_Modifica = new Date();
+    await atencion.save();
+    return res
+      .status(200)
+      .json(buildResponse({ data: atencion, mensaje: 'Vacuna marcada como notificada' }));
+  } catch {
+    return res
+      .status(200)
+      .json(buildResponse({ error: true, codigo: 500, mensaje: 'Error al marcar vacuna' }));
   }
 }
 
@@ -659,15 +792,13 @@ export async function obtenerResumenReporteria(req: Request, res: Response) {
       }),
     );
   } catch {
-    return res
-      .status(200)
-      .json(
-        buildResponse({
-          error: true,
-          codigo: 500,
-          mensaje: 'Error al obtener resumen de reportería',
-        }),
-      );
+    return res.status(200).json(
+      buildResponse({
+        error: true,
+        codigo: 500,
+        mensaje: 'Error al obtener resumen de reportería',
+      }),
+    );
   }
 }
 
@@ -761,6 +892,18 @@ export async function crearAtencion(req: Request, res: Response) {
       },
       String(ficha.empresa_Id),
     );
+    const motivo = await construirCampoClinico(
+      req.body?.motivo_Id,
+      req.body?.motivo,
+      'MOTIVO_CONSULTA',
+      String(ficha.empresa_Id),
+    );
+    const diagnostico = await construirCampoClinico(
+      req.body?.diagnostico_Id,
+      req.body?.diagnostico,
+      'DIAGNOSTICO',
+      String(ficha.empresa_Id),
+    );
     const recetas = await construirRecetas(req.body?.recetas, String(ficha.empresa_Id));
     const cobros = await construirCobros(req.body?.cobros, String(ficha.empresa_Id));
     const examenes = await construirExamenes(req.body?.examenes, String(ficha.empresa_Id));
@@ -781,6 +924,10 @@ export async function crearAtencion(req: Request, res: Response) {
       empresa_Id: ficha.empresa_Id,
       tipoAtencion_Id: tipoAtencion.tipoAtencion_Id,
       tipoAtencion: tipoAtencion.tipoAtencion,
+      motivo_Id: motivo.id,
+      motivo: motivo.texto,
+      diagnostico_Id: diagnostico.id,
+      diagnostico: diagnostico.texto,
       procedimientos,
       recetas,
       examenes,
@@ -791,6 +938,13 @@ export async function crearAtencion(req: Request, res: Response) {
       estado: 'Activo',
       fechaHora_Crea: new Date(),
     });
+    await actualizarStockPorAtencion(
+      atencion.insumos,
+      String(ficha.empresa_Id),
+      atencion._id,
+      access.userId,
+      'Salida',
+    );
     await atencion.save();
     await atencion.populate(atencionPopulate);
 
@@ -854,6 +1008,18 @@ export async function modificarAtencion(req: Request, res: Response) {
       },
       String(ficha.empresa_Id),
     );
+    const motivo = await construirCampoClinico(
+      req.body?.motivo_Id,
+      req.body?.motivo,
+      'MOTIVO_CONSULTA',
+      String(ficha.empresa_Id),
+    );
+    const diagnostico = await construirCampoClinico(
+      req.body?.diagnostico_Id,
+      req.body?.diagnostico,
+      'DIAGNOSTICO',
+      String(ficha.empresa_Id),
+    );
     const recetas = await construirRecetas(req.body?.recetas, String(ficha.empresa_Id));
     const cobros = await construirCobros(req.body?.cobros, String(ficha.empresa_Id));
     const examenes = await construirExamenes(req.body?.examenes, String(ficha.empresa_Id));
@@ -876,6 +1042,10 @@ export async function modificarAtencion(req: Request, res: Response) {
         empresa_Id: ficha.empresa_Id,
         tipoAtencion_Id: tipoAtencion.tipoAtencion_Id,
         tipoAtencion: tipoAtencion.tipoAtencion,
+        motivo_Id: motivo.id,
+        motivo: motivo.texto,
+        diagnostico_Id: diagnostico.id,
+        diagnostico: diagnostico.texto,
         procedimientos,
         recetas,
         examenes,
@@ -899,6 +1069,21 @@ export async function modificarAtencion(req: Request, res: Response) {
       );
     }
 
+    await actualizarStockPorAtencion(
+      atencionActual.insumos,
+      String(atencionActual.empresa_Id),
+      atencionActual._id,
+      access.userId,
+      'Entrada',
+    );
+    await actualizarStockPorAtencion(
+      atencion.insumos,
+      String(atencion.empresa_Id),
+      atencion._id,
+      access.userId,
+      'Salida',
+    );
+
     return res.status(200).json(
       buildResponse({
         data: atencion,
@@ -921,7 +1106,7 @@ export async function eliminarAtencion(req: Request, res: Response) {
     const access = await getVeterinaryAccess(req);
     const usuarioModifica_id = req.user?._id || req.user?.id;
     const atencionActual = await Atencion.findById(req.params.id)
-      .select('empresa_Id ficha_Id')
+      .select('empresa_Id ficha_Id insumos estado')
       .lean();
     const ficha = atencionActual
       ? await Ficha.findById(atencionActual.ficha_Id).select('propietario_Id').lean()
@@ -935,6 +1120,11 @@ export async function eliminarAtencion(req: Request, res: Response) {
       return res
         .status(200)
         .json(buildResponse({ error: true, codigo: 403, mensaje: 'Atención no autorizada' }));
+    }
+    if (atencionActual.estado === 'Borrado') {
+      return res
+        .status(200)
+        .json(buildResponse({ error: true, codigo: 404, mensaje: 'Atención no encontrada' }));
     }
     const atencion = await Atencion.findOneAndUpdate(
       { _id: req.params.id, empresa_Id: atencionActual.empresa_Id },
@@ -955,6 +1145,14 @@ export async function eliminarAtencion(req: Request, res: Response) {
         }),
       );
     }
+
+    await actualizarStockPorAtencion(
+      atencionActual.insumos,
+      String(atencionActual.empresa_Id),
+      atencionActual._id,
+      access.userId,
+      'Entrada',
+    );
 
     return res.status(200).json(
       buildResponse({

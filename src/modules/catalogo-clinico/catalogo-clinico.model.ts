@@ -1,9 +1,9 @@
 import { Schema, model } from 'mongoose';
 
 const CatalogoClinicoSchema = new Schema({
-  tipo: {
-    type: String,
-    enum: ['MOTIVO_CONSULTA', 'DIAGNOSTICO', 'VACUNA', 'INSUMO'],
+  tipoCatalogoClinico_Id: {
+    type: Schema.Types.ObjectId,
+    ref: 'TipoCatalogoClinico',
     required: true,
   },
   codigo: { type: String, required: true, trim: true },
@@ -18,7 +18,10 @@ const CatalogoClinicoSchema = new Schema({
   fechaHora_Modifica: { type: Date },
 });
 
-CatalogoClinicoSchema.index({ empresa_Id: 1, tipo: 1, codigo: 1 }, { unique: true });
-CatalogoClinicoSchema.index({ empresa_Id: 1, tipo: 1, estado: 1, nombre: 1 });
+CatalogoClinicoSchema.index(
+  { empresa_Id: 1, tipoCatalogoClinico_Id: 1, codigo: 1 },
+  { unique: true },
+);
+CatalogoClinicoSchema.index({ empresa_Id: 1, tipoCatalogoClinico_Id: 1, estado: 1, nombre: 1 });
 
 export default model('CatalogoClinico', CatalogoClinicoSchema);
