@@ -7,6 +7,7 @@ import RolVeterinario from '../rol-veterinario/rol-veterinario.model';
 import TipoVeterinario from '../tipo-veterinario/tipo-veterinario.model';
 import { UserModel } from '../user/user.model';
 import Empresa from './empresa.model';
+import { MenuItem } from '../../shared/modulo/menu-item.interface';
 
 type ApiResponse<T> = {
   error: boolean;
@@ -22,6 +23,32 @@ const buildResponse = <T>(overrides?: Partial<ApiResponse<T>>): ApiResponse<T> =
   mensaje: 'ok',
   ...overrides,
 });
+
+const ordenarMenuUsuario = (items: MenuItem[], ordenEmpresa: Map<string, number>): MenuItem[] =>
+  [...items]
+    .sort((a, b) => {
+      const ordenA = ordenEmpresa.get(String(a._id)) ?? Number.MAX_SAFE_INTEGER;
+      const ordenB = ordenEmpresa.get(String(b._id)) ?? Number.MAX_SAFE_INTEGER;
+      return ordenA - ordenB;
+    })
+    .map((item, index) => ({
+      ...item,
+      orden: index,
+      children: item.children?.length
+        ? ordenarMenuUsuario(item.children, ordenEmpresa)
+        : item.children,
+    }));
+
+const construirOrdenMenu = (items: MenuItem[], ordenEmpresa: Map<string, number>): void => {
+  items.forEach((item, index) => {
+    if (item._id) {
+      ordenEmpresa.set(String(item._id), index);
+    }
+    if (item.children?.length) {
+      construirOrdenMenu(item.children, ordenEmpresa);
+    }
+  });
+};
 
 const getDuplicateEmpresaMessage = (keyPattern: Record<string, unknown> = {}): string => {
   if (keyPattern['rutEmpresa']) {
@@ -510,6 +537,29 @@ export async function modificarMenuEmpresa(req: Request, res: Response) {
         .status(200)
         .json(buildResponse({ error: true, codigo: 404, mensaje: 'Empresa no encontrada' }));
     }
+
+    const ordenEmpresa = new Map<string, number>();
+    construirOrdenMenu(MenuItem as MenuItem[], ordenEmpresa);
+    const usuariosEmpresa = await UserModel.find({ 'empresa.empresaId': String(id) })
+      .select('_id MenuItem')
+      .lean();
+    const actualizacionesUsuarios = usuariosEmpresa
+      .filter((usuario) => usuario.MenuItem?.length)
+      .map((usuario) => ({
+        updateOne: {
+          filter: { _id: usuario._id },
+          update: {
+            $set: {
+              MenuItem: ordenarMenuUsuario(usuario.MenuItem as MenuItem[], ordenEmpresa),
+            },
+          },
+        },
+      }));
+
+    if (actualizacionesUsuarios.length) {
+      await UserModel.bulkWrite(actualizacionesUsuarios);
+    }
+
     return res.status(200).json(
       buildResponse({
         data: empresaActualizada,
